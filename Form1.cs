@@ -25,7 +25,6 @@ namespace MyMusicPlayer
         public Form1()
         {
             InitializeComponent();
-            InitializeMaterialSkin();
 
             // Set up custom list view drawing for bronze selection
             SetupCustomListView();
@@ -164,6 +163,7 @@ namespace MyMusicPlayer
             // Enable custom drawing
             lstShows.OwnerDraw = true;
             lstShows.DrawItem += LstShows_DrawItem;
+            lstShows.BorderStyle = BorderStyle.None;
         }
 
         private void LstShows_DrawItem(object? sender, DrawListViewItemEventArgs e)
@@ -241,22 +241,6 @@ namespace MyMusicPlayer
 
             // Dispose the icon font
             iconFont.Dispose();
-        }
-
-        private void InitializeMaterialSkin()
-        {
-            var materialSkinManager = MaterialSkinManager.Instance;
-            // DON'T add the form to MaterialSkin management - this removes the blue bar
-            // materialSkinManager.AddFormToManage(this);  // REMOVE THIS LINE
-            materialSkinManager.Theme = MaterialSkinManager.Themes.DARK;
-
-            // Using hex colors with ColorTranslator
-            materialSkinManager.ColorScheme = new ColorScheme(
-                ColorTranslator.FromHtml("#0C2999"), // Primary - Blue
-                ColorTranslator.FromHtml("#081B66"), // Primary Dark - Darker blue
-                ColorTranslator.FromHtml("#6B85FF"), // Primary Light - Lighter blue
-                ColorTranslator.FromHtml("#FF1C14"), // Accent - Pink
-                TextShade.WHITE);
         }
 
         private void UpdateButtonStates()
@@ -734,9 +718,16 @@ namespace MyMusicPlayer
 
         private string FormatTime(TimeSpan time)
         {
-            return $"{(int)time.TotalMinutes:D2}:{time.Seconds:D2}";
+            // Handle times over 99 minutes properly
+            if (time.TotalMinutes >= 100)
+            {
+                return $"{(int)time.TotalMinutes:D3}:{time.Seconds:D2}";
+            }
+            else
+            {
+                return $"{(int)time.TotalMinutes:D2}:{time.Seconds:D2}";
+            }
         }
-        
-        
+         
     }
 }

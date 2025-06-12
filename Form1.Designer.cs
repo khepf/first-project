@@ -11,8 +11,8 @@ partial class Form1
     private RoundedButton btnStop;
     private RoundedButton btnRandom;
     private CustomTrackBar trackProgress;
-    private System.Windows.Forms.Label lblCurrentTime;
-    private System.Windows.Forms.Label lblTotalTime; 
+    private DigitalTimeLabel lblCurrentTime;
+    private DigitalTimeLabel lblTotalTime;
     private StringCircularDial dialCollection;
     private StringCircularDial dialYear;
     private System.Windows.Forms.ListView lstShows;
@@ -20,6 +20,7 @@ partial class Form1
     private System.Windows.Forms.Label lblCurrentlyPlaying;
     private System.Windows.Forms.PictureBox picCassette;
     private System.Windows.Forms.PictureBox picBottomBoard;
+    private System.Windows.Forms.PictureBox picScreen; // Added screen PictureBox
 
     /// <summary>
     ///  Clean up any resources being used.
@@ -62,8 +63,8 @@ partial class Form1
         this.btnStop = new RoundedButton();
         this.btnRandom = new RoundedButton(); 
         this.trackProgress = new CustomTrackBar();
-        this.lblCurrentTime = new System.Windows.Forms.Label();
-        this.lblTotalTime = new System.Windows.Forms.Label();
+        this.lblCurrentTime = new DigitalTimeLabel();
+        this.lblTotalTime = new DigitalTimeLabel();
         this.dialCollection = new StringCircularDial();
         this.dialYear = new StringCircularDial();
         this.lstShows = new System.Windows.Forms.ListView();
@@ -71,9 +72,17 @@ partial class Form1
         this.lblCurrentlyPlaying = new System.Windows.Forms.Label();
         this.picCassette = new System.Windows.Forms.PictureBox();
         this.picBottomBoard = new System.Windows.Forms.PictureBox();
+        this.picScreen = new System.Windows.Forms.PictureBox(); // Initialize screen PictureBox
+
+        // Screen image
+        this.picScreen.Size = new System.Drawing.Size(650, 200);
+        this.picScreen.Location = new System.Drawing.Point(70, 10);
+        this.picScreen.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+        this.picScreen.BackColor = Color.Transparent;
+        LoadScreenImage();
 
         // Cassette image
-        this.picCassette.Size = new System.Drawing.Size(360, 216);
+        this.picCassette.Size = new System.Drawing.Size(360, 200);
         this.picCassette.Location = new System.Drawing.Point(220, 210);
         this.picCassette.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
         this.picCassette.BackColor = Color.Transparent;
@@ -85,8 +94,8 @@ partial class Form1
         this.picBottomBoard.BackColor = Color.Transparent;
 
         // list of shows
-        this.lstShows.Location = new System.Drawing.Point(90, 10);
-        this.lstShows.Size = new System.Drawing.Size(600, 200);
+        this.lstShows.Location = new System.Drawing.Point(150, 37);
+        this.lstShows.Size = new System.Drawing.Size(500, 140);
         this.lstShows.View = System.Windows.Forms.View.Details;
         this.lstShows.FullRowSelect = true;
         this.lstShows.GridLines = false;
@@ -96,30 +105,30 @@ partial class Form1
         this.lstShows.ForeColor = Color.White;
         this.lstShows.BorderStyle = BorderStyle.FixedSingle;
         this.lstShows.HideSelection = false;
-        this.lstShows.Font = new Font("Times New Roman", 18, FontStyle.Italic);
+        this.lstShows.Font = new Font("Consolas", 18, FontStyle.Bold);
 
         // Add a column for the ListView
-        this.lstShows.Columns.Add("Shows", 600, System.Windows.Forms.HorizontalAlignment.Center);
+        this.lstShows.Columns.Add("Shows", 500, System.Windows.Forms.HorizontalAlignment.Center);
         this.lstShows.DoubleClick += new System.EventHandler(this.LstShows_DoubleClick);
         this.lstShows.SelectedIndexChanged += new System.EventHandler(this.LstShows_SelectedIndexChanged);
 
         // Current path label 
         this.lblCurrentPath.Text = "";
-        this.lblCurrentPath.Location = new System.Drawing.Point(266, 240);
-        this.lblCurrentPath.AutoSize = true;
+        this.lblCurrentPath.Location = new System.Drawing.Point(262, 240);
+        this.lblCurrentPath.Size = new System.Drawing.Size(270, 32);
         this.lblCurrentPath.Font = new Font("Times New Roman", 18, FontStyle.Italic);
         this.lblCurrentPath.ForeColor = ColorTranslator.FromHtml("#D2691E");
-        this.lblCurrentPath.BackColor = Color.Transparent;
+        this.lblCurrentPath.BackColor = Color.Black;
         this.lblCurrentPath.TextAlign = ContentAlignment.MiddleCenter;
 
         // Currently playing label
         this.lblCurrentlyPlaying.Text = "";
-        this.lblCurrentlyPlaying.Location = new System.Drawing.Point(260, 332);
+        this.lblCurrentlyPlaying.Location = new System.Drawing.Point(262, 322);
         this.lblCurrentlyPlaying.Size = new System.Drawing.Size(270, 32);
         this.lblCurrentlyPlaying.AutoSize = false;
         this.lblCurrentlyPlaying.Font = new Font("Times New Roman", 8, FontStyle.Bold);
         this.lblCurrentlyPlaying.ForeColor = ColorTranslator.FromHtml("#D2691E");
-        this.lblCurrentlyPlaying.BackColor = Color.Transparent;
+        this.lblCurrentlyPlaying.BackColor = Color.Black;
         this.lblCurrentlyPlaying.TextAlign = ContentAlignment.MiddleCenter;
         this.lblCurrentlyPlaying.BorderStyle = BorderStyle.None;
 
@@ -133,13 +142,10 @@ partial class Form1
         // this.dialYear.Size = new System.Drawing.Size(120, 120);
         this.dialYear.SelectedIndexChanged += new System.EventHandler(this.DialYear_SelectedIndexChanged);
 
-        // Progress bar area
+        // Progress bar area with square digital time displays
         this.lblCurrentTime.Text = "00:00";
-        this.lblCurrentTime.Location = new System.Drawing.Point(16, 560);
-        this.lblCurrentTime.Size = new System.Drawing.Size(50, 23);
-        this.lblCurrentTime.BackColor = Color.Transparent;
-        this.lblCurrentTime.ForeColor = Color.White;
-        this.lblCurrentTime.Font = new Font("Arial", 10, FontStyle.Bold);
+        this.lblCurrentTime.Location = new System.Drawing.Point(50, 480);
+        this.lblCurrentTime.Size = new System.Drawing.Size(70, 70); // Perfect square
 
         this.trackProgress.Location = new System.Drawing.Point(76, 560);
         this.trackProgress.Size = new System.Drawing.Size(640, 45);
@@ -152,12 +158,8 @@ partial class Form1
         this.trackProgress.MouseUp += new System.Windows.Forms.MouseEventHandler(this.TrackProgress_MouseUp);
 
         this.lblTotalTime.Text = "00:00";
-        this.lblTotalTime.Location = new System.Drawing.Point(726, 560);
-        this.lblTotalTime.Size = new System.Drawing.Size(50, 23);
-        this.lblTotalTime.BackColor = Color.Transparent;
-        this.lblTotalTime.ForeColor = Color.White;
-        this.lblTotalTime.Font = new Font("Arial", 10, FontStyle.Bold);
-
+        this.lblTotalTime.Location = new System.Drawing.Point(660, 480);
+        this.lblTotalTime.Size = new System.Drawing.Size(70, 70); // Perfect square
         // Combined Play/Pause button - centered position
         this.btnPlay.Text = "▶";
         this.btnPlay.Location = new System.Drawing.Point(284, 478);
@@ -178,6 +180,8 @@ partial class Form1
         this.btnRandom.Click += new System.EventHandler(this.BtnRandom_Click);
 
         // Add controls to the form
+        this.Controls.Add(this.lstShows);
+        this.Controls.Add(this.picScreen);
         this.Controls.Add(this.btnPlay);
         this.Controls.Add(this.btnStop);
         this.Controls.Add(this.btnRandom); 
@@ -189,8 +193,6 @@ partial class Form1
         this.Controls.Add(this.lblCurrentTime);
         this.Controls.Add(this.lblTotalTime);
         this.Controls.Add(this.picBottomBoard);
-
-        this.Controls.Add(this.lstShows);
         this.Controls.Add(this.lblCurrentlyPlaying);
 
         this.lblCurrentlyPlaying.BringToFront();
@@ -202,40 +204,77 @@ partial class Form1
     }
     
     private void SetBackgroundImage()
-{
-    // Try multiple possible paths for background.png
-    string[] possiblePaths = {
-        Path.Combine(Application.StartupPath, "Images", "background.png"),
-        Path.Combine(Directory.GetCurrentDirectory(), "Images", "background.png"),
-        Path.Combine(Directory.GetParent(Application.StartupPath)?.Parent?.Parent?.FullName ?? Application.StartupPath, "Images", "background.png")
-    };
-    
-    bool imageLoaded = false;
-    
-    foreach (var path in possiblePaths)
     {
-        if (File.Exists(path))
+        // Try multiple possible paths for background.png
+        string[] possiblePaths = {
+            Path.Combine(Application.StartupPath, "Images", "background.png"),
+            Path.Combine(Directory.GetCurrentDirectory(), "Images", "background.png"),
+            Path.Combine(Directory.GetParent(Application.StartupPath)?.Parent?.Parent?.FullName ?? Application.StartupPath, "Images", "background.png")
+        };
+        
+        bool imageLoaded = false;
+        
+        foreach (var path in possiblePaths)
         {
-            try
+            if (File.Exists(path))
             {
-                this.BackgroundImage = Image.FromFile(path);
-                this.BackgroundImageLayout = ImageLayout.Stretch;
-                imageLoaded = true;
-                break;
-            }
-            catch
-            {
-                // If loading fails, continue to next path
+                try
+                {
+                    this.BackgroundImage = Image.FromFile(path);
+                    this.BackgroundImageLayout = ImageLayout.Stretch;
+                    imageLoaded = true;
+                    break;
+                }
+                catch
+                {
+                    // If loading fails, continue to next path
+                }
             }
         }
+        
+        if (!imageLoaded)
+        {
+            // Fallback to solid color if image not found
+            this.BackColor = Color.FromArgb(20, 20, 20); // Dark gray
+        }
     }
-    
-    if (!imageLoaded)
+
+    private void LoadScreenImage()
     {
-        // Fallback to solid color if image not found
-        this.BackColor = Color.FromArgb(20, 20, 20); // Dark gray
+        // Try multiple possible paths for screen.png
+        string[] screenPaths = {
+            Path.Combine(Application.StartupPath, "Images", "screen.png"),
+            Path.Combine(Directory.GetCurrentDirectory(), "Images", "screen.png"),
+            Path.Combine(Directory.GetParent(Application.StartupPath)?.Parent?.Parent?.FullName ?? Application.StartupPath, "Images", "screen.png")
+        };
+
+        bool screenLoaded = false;
+        foreach (var path in screenPaths)
+        {
+            System.Diagnostics.Debug.WriteLine($"Trying screen image path: {path}");
+            
+            if (File.Exists(path))
+            {
+                try
+                {
+                    picScreen.Image = Image.FromFile(path);
+                    System.Diagnostics.Debug.WriteLine($"SUCCESS! Screen image loaded from: {path}");
+                    screenLoaded = true;
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error loading screen image from {path}: {ex.Message}");
+                }
+            }
+        }
+
+        if (!screenLoaded)
+        {
+            System.Diagnostics.Debug.WriteLine("Screen image not found!");
+            picScreen.Visible = false;
+        }
     }
-}
 
     #endregion
 }
