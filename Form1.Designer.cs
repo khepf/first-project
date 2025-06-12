@@ -8,7 +8,6 @@ partial class Form1
     private System.ComponentModel.IContainer components = null;
 
     private RoundedButton btnPlay;
-    // Removed: private RoundedButton btnPause;
     private RoundedButton btnStop;
     private RoundedButton btnRandom;
     private CustomTrackBar trackProgress;
@@ -17,10 +16,10 @@ partial class Form1
     private StringCircularDial dialCollection;
     private StringCircularDial dialYear;
     private System.Windows.Forms.ListView lstShows;
-    private System.Windows.Forms.Label lblShows;
     private System.Windows.Forms.Label lblCurrentPath;
     private System.Windows.Forms.Label lblCurrentlyPlaying;
     private System.Windows.Forms.PictureBox picCassette;
+    private System.Windows.Forms.PictureBox picBottomBoard;
 
     /// <summary>
     ///  Clean up any resources being used.
@@ -68,27 +67,25 @@ partial class Form1
         this.dialCollection = new StringCircularDial();
         this.dialYear = new StringCircularDial();
         this.lstShows = new System.Windows.Forms.ListView();
-        this.lblShows = new System.Windows.Forms.Label();
         this.lblCurrentPath = new System.Windows.Forms.Label();
         this.lblCurrentlyPlaying = new System.Windows.Forms.Label();
         this.picCassette = new System.Windows.Forms.PictureBox();
+        this.picBottomBoard = new System.Windows.Forms.PictureBox();
 
         // Cassette image
         this.picCassette.Size = new System.Drawing.Size(360, 216);
-        this.picCassette.Location = new System.Drawing.Point(220, 240);
+        this.picCassette.Location = new System.Drawing.Point(220, 210);
         this.picCassette.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
         this.picCassette.BackColor = Color.Transparent;
 
-        // "Select a Show"
-        this.lblShows.Text = "Select a Show, Press Play";
-        this.lblShows.Location = new System.Drawing.Point(260, 4);
-        this.lblShows.AutoSize = true;
-        this.lblShows.Font = new Font("Times New Roman", 18, FontStyle.Italic);
-        this.lblShows.ForeColor = ColorTranslator.FromHtml("#D2691E"); // Bronze color
-        this.lblShows.BackColor = Color.Transparent;
+        // bottom board image
+        this.picBottomBoard.Size = new System.Drawing.Size(784, 220); // Adjust size as needed
+        this.picBottomBoard.Location = new System.Drawing.Point(0, 410); // Position at the bottom
+        this.picBottomBoard.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+        this.picBottomBoard.BackColor = Color.Transparent;
 
         // list of shows
-        this.lstShows.Location = new System.Drawing.Point(90, 36);
+        this.lstShows.Location = new System.Drawing.Point(90, 10);
         this.lstShows.Size = new System.Drawing.Size(600, 200);
         this.lstShows.View = System.Windows.Forms.View.Details;
         this.lstShows.FullRowSelect = true;
@@ -108,7 +105,7 @@ partial class Form1
 
         // Current path label 
         this.lblCurrentPath.Text = "";
-        this.lblCurrentPath.Location = new System.Drawing.Point(266, 270);
+        this.lblCurrentPath.Location = new System.Drawing.Point(266, 240);
         this.lblCurrentPath.AutoSize = true;
         this.lblCurrentPath.Font = new Font("Times New Roman", 18, FontStyle.Italic);
         this.lblCurrentPath.ForeColor = ColorTranslator.FromHtml("#D2691E");
@@ -117,7 +114,7 @@ partial class Form1
 
         // Currently playing label
         this.lblCurrentlyPlaying.Text = "";
-        this.lblCurrentlyPlaying.Location = new System.Drawing.Point(260, 362);
+        this.lblCurrentlyPlaying.Location = new System.Drawing.Point(260, 332);
         this.lblCurrentlyPlaying.Size = new System.Drawing.Size(270, 32);
         this.lblCurrentlyPlaying.AutoSize = false;
         this.lblCurrentlyPlaying.Font = new Font("Times New Roman", 8, FontStyle.Bold);
@@ -127,13 +124,13 @@ partial class Form1
         this.lblCurrentlyPlaying.BorderStyle = BorderStyle.None;
 
         // Collection dial (Bands)
-        this.dialCollection.Location = new System.Drawing.Point(0, 280);
-        this.dialCollection.Size = new System.Drawing.Size(200, 200);
+        this.dialCollection.Location = new System.Drawing.Point(0, 210);
+        // this.dialCollection.Size = new System.Drawing.Size(120, 120);
         this.dialCollection.SelectedIndexChanged += new System.EventHandler(this.DialCollection_SelectedIndexChanged);
 
         // Year dial
-        this.dialYear.Location = new System.Drawing.Point(580, 280);
-        this.dialYear.Size = new System.Drawing.Size(200, 200);
+        this.dialYear.Location = new System.Drawing.Point(580, 210);
+        // this.dialYear.Size = new System.Drawing.Size(120, 120);
         this.dialYear.SelectedIndexChanged += new System.EventHandler(this.DialYear_SelectedIndexChanged);
 
         // Progress bar area
@@ -163,35 +160,36 @@ partial class Form1
 
         // Combined Play/Pause button - centered position
         this.btnPlay.Text = "▶";
-        this.btnPlay.Location = new System.Drawing.Point(284, 470);
+        this.btnPlay.Location = new System.Drawing.Point(284, 478);
         this.btnPlay.Size = new System.Drawing.Size(70, 70);
         this.btnPlay.Click += new System.EventHandler(this.BtnPlayPause_Click);
 
         // Stop button - moved closer to play button
         this.btnStop.Text = "⏹";
-        this.btnStop.Location = new System.Drawing.Point(362, 470);
+        this.btnStop.Location = new System.Drawing.Point(362, 478);
         this.btnStop.Size = new System.Drawing.Size(70, 70);
         this.btnStop.Click += new System.EventHandler(this.BtnStop_Click);
 
         // Random button - NEW
         this.btnRandom.Text = "🎲";
-        this.btnRandom.Location = new System.Drawing.Point(440, 470);
+        this.btnRandom.Location = new System.Drawing.Point(440, 478);
         this.btnRandom.Size = new System.Drawing.Size(70, 70);
         this.btnRandom.Font = new Font("Segoe UI Symbol", 24, FontStyle.Bold);
         this.btnRandom.Click += new System.EventHandler(this.BtnRandom_Click);
 
         // Add controls to the form
-        this.Controls.Add(this.lblCurrentPath);
-        this.Controls.Add(this.picCassette);
         this.Controls.Add(this.btnPlay);
         this.Controls.Add(this.btnStop);
         this.Controls.Add(this.btnRandom); 
-        this.Controls.Add(this.lblCurrentTime);
         this.Controls.Add(this.trackProgress);
-        this.Controls.Add(this.lblTotalTime);
         this.Controls.Add(this.dialCollection);
         this.Controls.Add(this.dialYear);
-        this.Controls.Add(this.lblShows);
+        this.Controls.Add(this.lblCurrentPath);
+        this.Controls.Add(this.picCassette);
+        this.Controls.Add(this.lblCurrentTime);
+        this.Controls.Add(this.lblTotalTime);
+        this.Controls.Add(this.picBottomBoard);
+
         this.Controls.Add(this.lstShows);
         this.Controls.Add(this.lblCurrentlyPlaying);
 

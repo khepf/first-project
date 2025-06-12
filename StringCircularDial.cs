@@ -77,54 +77,54 @@ public class StringCircularDial : Control
                 ControlStyles.UserPaint | 
                 ControlStyles.DoubleBuffer |
                 ControlStyles.SupportsTransparentBackColor, true);
-        Size = new Size(120, 120);
+        Size = new Size(200, 200);
         BackColor = Color.Transparent;
     }
 
-protected override void OnPaint(PaintEventArgs e)
-{
-    Graphics g = e.Graphics;
-    g.SmoothingMode = SmoothingMode.AntiAlias;
-    g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
-
-    // Draw the dial background with more padding to accommodate the knob indicator
-    Rectangle dialRect = new Rectangle(15, 15, Width - 30, Height - 30);
-    
-    if (_useBackgroundImage && _backgroundImage != null)
+    protected override void OnPaint(PaintEventArgs e)
     {
-        // Create a circular clipping region
-        using (GraphicsPath clipPath = new GraphicsPath())
+        Graphics g = e.Graphics;
+        g.SmoothingMode = SmoothingMode.AntiAlias;
+        g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
+
+        // Draw the dial background with more padding to accommodate the knob indicator
+        Rectangle dialRect = new Rectangle(0, 0, Width, Height);
+
+        if (_useBackgroundImage && _backgroundImage != null)
         {
-            clipPath.AddEllipse(dialRect);
-            g.SetClip(clipPath);
-            
-            // Draw the background image, scaled to fit the circle
-            g.DrawImage(_backgroundImage, dialRect);
-            
-            // Reset clipping
-            g.ResetClip();
+            // Create a circular clipping region
+            using (GraphicsPath clipPath = new GraphicsPath())
+            {
+                clipPath.AddEllipse(dialRect);
+                g.SetClip(clipPath);
+
+                // Draw the background image, scaled to fit the circle
+                g.DrawImage(_backgroundImage, dialRect);
+
+                // Reset clipping
+                g.ResetClip();
+            }
         }
-    }
 
         // Draw tick marks for each item with adjusted radius calculations
         if (_items.Count > 0)
         {
             float centerX = Width / 2f;
             float centerY = Height / 2f;
-            float outerRadius = Math.Min(Width, Height) / 2f - 20;
-            float innerRadius = outerRadius - 15;
+            float outerRadius = Math.Min(Width, Height) / 2f - 8;
+            float innerRadius = outerRadius -20;
 
             for (int i = 0; i < _items.Count; i++)
             {
                 float angle = (float)i / _items.Count * 360f - 90f; // Start from top
                 float radians = angle * (float)Math.PI / 180f;
-                
+
                 float x1 = centerX + innerRadius * (float)Math.Cos(radians);
                 float y1 = centerY + innerRadius * (float)Math.Sin(radians);
                 float x2 = centerX + outerRadius * (float)Math.Cos(radians);
                 float y2 = centerY + outerRadius * (float)Math.Sin(radians);
 
-                using (Pen tickPen = new Pen(i == _selectedIndex ? Color.Red : (_useBackgroundImage ? Color.White : Color.Gray), 
+                using (Pen tickPen = new Pen(i == _selectedIndex ? Color.Red : (_useBackgroundImage ? Color.White : Color.Gray),
                                         i == _selectedIndex ? 3 : (_useBackgroundImage ? 2 : 1)))
                 {
                     g.DrawLine(tickPen, x1, y1, x2, y2);
@@ -135,18 +135,18 @@ protected override void OnPaint(PaintEventArgs e)
             if (_selectedIndex >= 0 && _selectedIndex < _items.Count)
             {
                 string selectedText = _items[_selectedIndex];
-                
+
                 // Define the text area (larger for better text wrapping)
                 float textAreaSize = Math.Min(Width, Height) * 0.45f;
-                
+
                 // Adjust the text rectangle position - move down and left for better centering
                 float offsetX = -3f; // Move 5 pixels to the left
                 float offsetY = 5f;  // Move 5 pixels down
-                
+
                 RectangleF textRect = new RectangleF(
-                    centerX - textAreaSize / 2 + offsetX, 
-                    centerY - textAreaSize / 2 + offsetY, 
-                    textAreaSize, 
+                    centerX - textAreaSize / 2 + offsetX,
+                    centerY - textAreaSize / 2 + offsetY,
+                    textAreaSize,
                     textAreaSize);
 
                 // Create StringFormat for center alignment and word wrapping
@@ -156,11 +156,11 @@ protected override void OnPaint(PaintEventArgs e)
                     stringFormat.LineAlignment = StringAlignment.Center;
                     stringFormat.FormatFlags = StringFormatFlags.NoClip;
                     stringFormat.Trimming = StringTrimming.Word;
-                    
+
                     // First, try to draw with regular DrawString for proper wrapping
                     // Measure the text to see if it fits
                     SizeF textSize = g.MeasureString(selectedText, _textFont, (int)textAreaSize, stringFormat);
-                    
+
                     // If text is too large, use a smaller font temporarily
                     Font displayFont = _textFont;
                     if (textSize.Height > textAreaSize)
@@ -170,10 +170,10 @@ protected override void OnPaint(PaintEventArgs e)
                         float newSize = Math.Max(8, _textFont.Size * scaleFactor); // Minimum size of 8
                         displayFont = new Font(_textFont.FontFamily, newSize, _textFont.Style);
                     }
-                    
+
                     // Draw text with outline effect using DrawString for proper wrapping
                     // First draw multiple times in white for outline effect
-                    using (Brush outlineBrush = new SolidBrush(Color.FromArgb(128, Color.White))) 
+                    using (Brush outlineBrush = new SolidBrush(Color.FromArgb(128, Color.White)))
                     {
                         // Draw outline by drawing text multiple times with slight offsets
                         for (int x = -1; x <= 1; x++)
@@ -183,20 +183,20 @@ protected override void OnPaint(PaintEventArgs e)
                                 if (x != 0 || y != 0) // Don't draw at center position
                                 {
                                     RectangleF outlineRect = new RectangleF(
-                                        textRect.X + x, textRect.Y + y, 
+                                        textRect.X + x, textRect.Y + y,
                                         textRect.Width, textRect.Height);
                                     g.DrawString(selectedText, displayFont, outlineBrush, outlineRect, stringFormat);
                                 }
                             }
                         }
                     }
-                    
+
                     // Draw the main text in black
                     using (Brush textBrush = new SolidBrush(Color.Black))
                     {
                         g.DrawString(selectedText, displayFont, textBrush, textRect, stringFormat);
                     }
-                    
+
                     // Dispose temporary font if we created one
                     if (displayFont != _textFont)
                     {
@@ -230,12 +230,12 @@ protected override void OnPaint(PaintEventArgs e)
             // No items - show "Empty" message in black with outline
             string emptyText = "Empty";
             RectangleF emptyRect = new RectangleF(0, 0, Width, Height);
-            
+
             using (StringFormat stringFormat = new StringFormat())
             {
                 stringFormat.Alignment = StringAlignment.Center;
                 stringFormat.LineAlignment = StringAlignment.Center;
-                
+
                 // Draw outline for empty text
                 using (Brush outlineBrush = new SolidBrush(Color.White))
                 {
@@ -246,14 +246,14 @@ protected override void OnPaint(PaintEventArgs e)
                             if (x != 0 || y != 0)
                             {
                                 RectangleF outlineRect = new RectangleF(
-                                    emptyRect.X + x, emptyRect.Y + y, 
+                                    emptyRect.X + x, emptyRect.Y + y,
                                     emptyRect.Width, emptyRect.Height);
                                 g.DrawString(emptyText, _textFont, outlineBrush, outlineRect, stringFormat);
                             }
                         }
                     }
                 }
-                
+
                 // Draw main empty text
                 using (Brush textBrush = new SolidBrush(Color.Black))
                 {

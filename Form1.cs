@@ -405,6 +405,28 @@ namespace MyMusicPlayer
                 picCassette.Visible = false;
             }
 
+            string[] bottomBoardPaths = {
+                Path.Combine(Application.StartupPath, "Images", "bottomboard.png"),
+                Path.Combine(Directory.GetCurrentDirectory(), "Images", "bottomboard.png"),
+                Path.Combine(Directory.GetParent(Application.StartupPath)?.Parent?.Parent?.FullName ?? Application.StartupPath, "Images", "bottomboard.png")
+            };
+
+            foreach (var path in bottomBoardPaths)
+            {
+                if (File.Exists(path))
+                {
+                    try
+                    {
+                        this.picBottomBoard.Image = Image.FromFile(path);
+                        break;
+                    }
+                    catch
+                    {
+                        // Handle image loading failure
+                    }
+                }
+            }
+
 
             if (!Directory.Exists(musicLibraryPath))
             {

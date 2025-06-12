@@ -207,8 +207,3 @@ Thumbs.db
 *.rar
 *.tar
 *.zip
-
-# Include specific required images
-!Images/background.png
-!Images/cassette.png
-!Images/knob3.png
