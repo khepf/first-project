@@ -19,8 +19,8 @@ namespace MyMusicPlayer
         {
             InitializeComponent();
             SetupCustomListView();
-            this.MaximizeBox = false;
-            this.MinimizeBox = true;
+            MaximizeBox = false;
+            MinimizeBox = true;
             LoadMainFolders();
             UpdateButtonStates();
         }
@@ -49,7 +49,6 @@ namespace MyMusicPlayer
 
         private void SetupCustomListView()
         {
-            // Enable custom drawing
             lstShows.OwnerDraw = true;
             lstShows.DrawItem += LstShows_DrawItem;
             lstShows.BorderStyle = BorderStyle.None;
@@ -213,7 +212,6 @@ namespace MyMusicPlayer
             iconFont.Dispose();
         }
 
-        // Add this helper method to create rounded rectangles
         private GraphicsPath CreateRoundedRectangle(Rectangle rect, int cornerRadius)
         {
             GraphicsPath path = new GraphicsPath();
@@ -235,34 +233,6 @@ namespace MyMusicPlayer
             return path;
         }
 
-        private void UpdateButtonStates()
-        {
-            bool hasSelectedItem = lstShows.SelectedItems.Count > 0;
-            bool hasLoadedFile = !string.IsNullOrEmpty(currentShowPath) && File.Exists(currentShowPath);
-            bool isPlaying = outputDevice?.PlaybackState == PlaybackState.Playing;
-            bool isPausedState = outputDevice?.PlaybackState == PlaybackState.Paused;
-            bool hasMusicLibrary = Directory.Exists(musicLibraryPath) && GetAllMp3Files(musicLibraryPath).Count > 0;
-
-            // Enable Play/Pause button if there's a selected item, loaded file, or something playing/paused
-            btnPlay.Enabled = hasSelectedItem || hasLoadedFile || isPlaying || isPausedState;
-
-            // Enable Stop button only if something is playing or paused
-            btnStop.Enabled = isPlaying || isPausedState;
-
-            // Enable Random button if there are any MP3 files in the library
-            btnRandom.Enabled = hasMusicLibrary;
-
-            // Update the icon based on current state
-            if (isPlaying)
-            {
-                btnPlay.Text = "⏸";  // Show pause icon when playing
-            }
-            else
-            {
-                btnPlay.Text = "▶";  // Show play icon when stopped or paused
-            }
-        }
-
         private void LoadMainFolders()
         {
             dialCollection.ClearItems();
@@ -276,61 +246,22 @@ namespace MyMusicPlayer
                 Path.Combine(Directory.GetParent(Application.StartupPath)?.Parent?.Parent?.FullName ?? Application.StartupPath, "Images", "knob.png")
             };
 
-            bool imageLoaded = false;
             Image? dialImage = null;
 
             foreach (var path in possiblePaths)
             {
-                System.Diagnostics.Debug.WriteLine($"Trying path: {path}");
-                System.Diagnostics.Debug.WriteLine($"File exists: {File.Exists(path)}");
 
                 if (File.Exists(path))
                 {
                     try
                     {
                         dialImage = Image.FromFile(path);
-                        System.Diagnostics.Debug.WriteLine($"SUCCESS! Image loaded from: {path}");
-                        imageLoaded = true;
                         break;
                     }
                     catch (Exception ex)
                     {
                         System.Diagnostics.Debug.WriteLine($"Error loading image from {path}: {ex.Message}");
                     }
-                }
-            }
-
-            // If no image loaded, create a test pattern
-            if (!imageLoaded)
-            {
-                System.Diagnostics.Debug.WriteLine("Creating test pattern image...");
-                try
-                {
-                    dialImage = new Bitmap(120, 120);
-                    using (Graphics g = Graphics.FromImage(dialImage))
-                    {
-                        // Create a nice gradient test pattern
-                        using (var brush = new LinearGradientBrush(
-                            new Rectangle(0, 0, 120, 120),
-                            ColorTranslator.FromHtml("#0C2999"), // Your blue
-                            ColorTranslator.FromHtml("#6B85FF"), // Your light blue
-                            45f))
-                        {
-                            g.FillEllipse(brush, 0, 0, 120, 120);
-                        }
-
-                        // Add border
-                        using (var pen = new Pen(Color.White, 3))
-                        {
-                            g.DrawEllipse(pen, 3, 3, 114, 114);
-                        }
-                    }
-
-                    System.Diagnostics.Debug.WriteLine("Test pattern created!");
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"Error creating test pattern: {ex.Message}");
                 }
             }
 
@@ -345,7 +276,7 @@ namespace MyMusicPlayer
                 dialImage.Dispose();
             }
 
-            // Load cassette image - CHANGED FROM picCassette to spinningCassette
+            // Load cassette image
             string[] cassettePaths = {
                 Path.Combine(Application.StartupPath, "Images", "cassette.png"),
                 Path.Combine(Directory.GetCurrentDirectory(), "Images", "cassette.png"),
@@ -391,7 +322,7 @@ namespace MyMusicPlayer
                 {
                     try
                     {
-                        this.picBottomBoard.Image = Image.FromFile(path);
+                        picBottomBoard.Image = Image.FromFile(path);
                         break;
                     }
                     catch
@@ -426,6 +357,34 @@ namespace MyMusicPlayer
             }
 
             UpdateButtonStates(); // Update after loading
+        }
+
+        private void UpdateButtonStates()
+        {
+            bool hasSelectedItem = lstShows.SelectedItems.Count > 0;
+            bool hasLoadedFile = !string.IsNullOrEmpty(currentShowPath) && File.Exists(currentShowPath);
+            bool isPlaying = outputDevice?.PlaybackState == PlaybackState.Playing;
+            bool isPausedState = outputDevice?.PlaybackState == PlaybackState.Paused;
+            bool hasMusicLibrary = Directory.Exists(musicLibraryPath) && GetAllMp3Files(musicLibraryPath).Count > 0;
+
+            // Enable Play/Pause button if there's a selected item, loaded file, or something playing/paused
+            btnPlay.Enabled = hasSelectedItem || hasLoadedFile || isPlaying || isPausedState;
+
+            // Enable Stop button only if something is playing or paused
+            btnStop.Enabled = isPlaying || isPausedState;
+
+            // Enable Random button if there are any MP3 files in the library
+            btnRandom.Enabled = hasMusicLibrary;
+
+            // Update the icon based on current state
+            if (isPlaying)
+            {
+                btnPlay.Text = "⏸";  // Show pause icon when playing
+            }
+            else
+            {
+                btnPlay.Text = "▶";  // Show play icon when stopped or paused
+            }
         }
 
         private void DialCollection_SelectedIndexChanged(object? sender, EventArgs e)

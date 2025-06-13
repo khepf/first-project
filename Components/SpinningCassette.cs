@@ -13,8 +13,8 @@ public class SpinningCassette : Control
     private bool isSpinning = false;
 
     // Define the wheel positions (you'll need to adjust these based on your cassette image)
-    private Rectangle leftWheelRect = new Rectangle(82, 63, 50, 50);   // Adjust position/size
-    private Rectangle rightWheelRect = new Rectangle(224, 63, 50, 50); // Adjust position/size
+    private Rectangle leftWheelRect = new Rectangle(75, 63, 50, 50);   // Adjust position/size
+    private Rectangle rightWheelRect = new Rectangle(211, 63, 50, 50); // Adjust position/size
 
     public SpinningCassette()
     {
@@ -103,64 +103,64 @@ public class SpinningCassette : Control
         }
     }
 
-private void DrawSpinningWheel(Graphics g, Rectangle wheelRect, float angle)
-{
-    // Save the current graphics state
-    GraphicsState state = g.Save();
-
-    // Move to the center of the wheel
-    g.TranslateTransform(wheelRect.X + wheelRect.Width / 2f, 
-                       wheelRect.Y + wheelRect.Height / 2f);
-    
-    // Rotate by the current angle
-    g.RotateTransform(angle);
-
-    // Draw the wheel spokes/lines to show rotation - MADE THICKER
-    using (Pen spokePen = new Pen(Color.FromArgb(200, 255, 255, 255), 3f)) // CHANGED: Increased from 2f to 3f
+    private void DrawSpinningWheel(Graphics g, Rectangle wheelRect, float angle)
     {
-        int spokeLength = wheelRect.Width / 3;
+        // Save the current graphics state
+        GraphicsState state = g.Save();
+
+        // Move to the center of the wheel
+        g.TranslateTransform(wheelRect.X + wheelRect.Width / 2f, 
+                        wheelRect.Y + wheelRect.Height / 2f);
         
-        // Draw 6 spokes at 60-degree intervals
-        for (int i = 0; i < 6; i++)
+        // Rotate by the current angle
+        g.RotateTransform(angle);
+
+        // Draw the wheel spokes/lines to show rotation - MADE THICKER
+        using (Pen spokePen = new Pen(Color.FromArgb(200, 255, 255, 255), 3f)) // CHANGED: Increased from 2f to 3f
         {
-            float spokeAngle = i * 60f;
-            float radians = spokeAngle * (float)(Math.PI / 180);
+            int spokeLength = wheelRect.Width / 3;
             
-            float x1 = (float)Math.Cos(radians) * (spokeLength / 2);
-            float y1 = (float)Math.Sin(radians) * (spokeLength / 2);
-            float x2 = (float)Math.Cos(radians) * spokeLength;
-            float y2 = (float)Math.Sin(radians) * spokeLength;
-            
-            g.DrawLine(spokePen, x1, y1, x2, y2);
+            // Draw 6 spokes at 60-degree intervals
+            for (int i = 0; i < 6; i++)
+            {
+                float spokeAngle = i * 60f;
+                float radians = spokeAngle * (float)(Math.PI / 180);
+                
+                float x1 = (float)Math.Cos(radians) * (spokeLength / 2);
+                float y1 = (float)Math.Sin(radians) * (spokeLength / 2);
+                float x2 = (float)Math.Cos(radians) * spokeLength;
+                float y2 = (float)Math.Sin(radians) * spokeLength;
+                
+                g.DrawLine(spokePen, x1, y1, x2, y2);
+            }
+
+            // Draw center circle
+            int centerSize = 8;
+            using (SolidBrush centerBrush = new SolidBrush(Color.FromArgb(180, 255, 255, 255))) // Semi-transparent white
+            {
+                g.FillEllipse(centerBrush, -centerSize/2, -centerSize/2, centerSize, centerSize);
+            }
         }
 
-        // Draw center circle
-        int centerSize = 8;
-        using (SolidBrush centerBrush = new SolidBrush(Color.FromArgb(180, 255, 255, 255))) // Semi-transparent white
+        // Restore the graphics state to remove rotation
+        g.Restore(state);
+
+        // Draw the outer white circle (non-rotating) - THICKER
+        using (Pen circlePen = new Pen(Color.FromArgb(200, 255, 255, 255), 4f)) // Thick outer circle
         {
-            g.FillEllipse(centerBrush, -centerSize/2, -centerSize/2, centerSize, centerSize);
+            int spokeLength = wheelRect.Width / 3;
+            int circleSize = spokeLength * 2; // Circle diameter matches the spoke length
+            int offset = (wheelRect.Width - circleSize) / 2; // Center the circle
+            Rectangle circleRect = new Rectangle(
+                wheelRect.X + offset, 
+                wheelRect.Y + offset, 
+                circleSize, 
+                circleSize
+            );
+            
+            g.DrawEllipse(circlePen, circleRect);
         }
     }
-
-    // Restore the graphics state to remove rotation
-    g.Restore(state);
-
-    // Draw the outer white circle (non-rotating) - THICKER
-    using (Pen circlePen = new Pen(Color.FromArgb(200, 255, 255, 255), 4f)) // Thick outer circle
-    {
-        int spokeLength = wheelRect.Width / 3;
-        int circleSize = spokeLength * 2; // Circle diameter matches the spoke length
-        int offset = (wheelRect.Width - circleSize) / 2; // Center the circle
-        Rectangle circleRect = new Rectangle(
-            wheelRect.X + offset, 
-            wheelRect.Y + offset, 
-            circleSize, 
-            circleSize
-        );
-        
-        g.DrawEllipse(circlePen, circleRect);
-    }
-}
 
     protected override void Dispose(bool disposing)
     {

@@ -62,12 +62,13 @@ namespace MyMusicPlayer
             try
             {
                 SetStyle(ControlStyles.AllPaintingInWmPaint | 
-                        ControlStyles.UserPaint | 
-                        ControlStyles.DoubleBuffer | 
-                        ControlStyles.ResizeRedraw, true);
+                    ControlStyles.UserPaint | 
+                    ControlStyles.DoubleBuffer | 
+                    ControlStyles.ResizeRedraw |
+                    ControlStyles.SupportsTransparentBackColor, true);
                 
                 Size = new Size(200, 45);
-                BackColor = Color.Black;
+                BackColor = Color.Transparent;
             }
             catch (Exception ex)
             {
@@ -79,7 +80,6 @@ namespace MyMusicPlayer
 
         protected override void OnPaint(PaintEventArgs e)
         {
-            base.OnPaint(e);
             
             // Add validation for control size
             if (Width <= 20 || Height <= 0)
@@ -93,10 +93,11 @@ namespace MyMusicPlayer
 
             // Calculate track rectangle
             int trackHeight = 6;
+            int trackRadius = trackHeight / 2;
             Rectangle trackRect = new Rectangle(
-                10, 
+                15, // Padding from container edge
                 (Height - trackHeight) / 2, 
-                Width - 20, 
+                Width - 30, // Padding from container edge
                 trackHeight
             );
 
@@ -106,16 +107,16 @@ namespace MyMusicPlayer
                 return;
             }
 
-            // Draw track background (dark)
-            using (SolidBrush trackBrush = new SolidBrush(Color.FromArgb(60, 60, 60)))
+            // Draw track background (dark) with rounded edges
+            using (SolidBrush trackBrush = new SolidBrush(Color.Black))
             {
-                g.FillRoundedRectangle(trackBrush, trackRect, trackHeight / 2);
+                g.FillRoundedRectangle(trackBrush, trackRect, trackRadius);
             }
 
-            // Draw track border
+            // Draw track border with rounded edges
             using (Pen trackPen = new Pen(Color.FromArgb(100, 100, 100), 1))
             {
-                g.DrawRoundedRectangle(trackPen, trackRect, trackHeight / 2);
+                g.DrawRoundedRectangle(trackPen, trackRect, trackRadius);
             }
 
             // Calculate thumb position
@@ -130,7 +131,7 @@ namespace MyMusicPlayer
                 thumbSize
             );
 
-            // Draw progress fill (bronze gradient)
+            // Draw progress fill (bronze gradient) with rounded edges
             if (percentage > 0)
             {
                 Rectangle fillRect = new Rectangle(
@@ -149,12 +150,12 @@ namespace MyMusicPlayer
                         _bronzeDark,
                         LinearGradientMode.Horizontal))
                     {
-                        g.FillRoundedRectangle(fillBrush, fillRect, trackHeight / 2);
+                        g.FillRoundedRectangle(fillBrush, fillRect, trackRadius);
                     }
                 }
             }
 
-            // Draw thumb (bronze gradient)
+            // Draw thumb (already circular - no changes needed)
             if (_thumbRect.Width > 0 && _thumbRect.Height > 0)
             {
                 using (LinearGradientBrush thumbBrush = new LinearGradientBrush(

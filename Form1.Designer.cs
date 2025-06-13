@@ -74,23 +74,33 @@ partial class Form1
         this.picScreen = new System.Windows.Forms.PictureBox();
         this.spinningCassette = new SpinningCassette();
 
-        // Screen image
-        this.picScreen.Size = new System.Drawing.Size(650, 200);
+        // TV Screen image
+        this.picScreen.Size = new System.Drawing.Size(650, 220);
         this.picScreen.Location = new System.Drawing.Point(70, 10);
         this.picScreen.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
         this.picScreen.BackColor = Color.Transparent;
         LoadScreenImage();
 
         // Spinning Cassette
-        this.spinningCassette.Size = new System.Drawing.Size(360, 200);
-        this.spinningCassette.Location = new System.Drawing.Point(220, 210);
+        this.spinningCassette.Size = new System.Drawing.Size(340, 200);
+        this.spinningCassette.Location = new System.Drawing.Point(232, 234);
         this.spinningCassette.BackColor = Color.Transparent;
 
-        // bottom board image
-        this.picBottomBoard.Size = new System.Drawing.Size(790, 220); // Adjust size as needed
-        this.picBottomBoard.Location = new System.Drawing.Point(0, 410); // Position at the bottom
+        // bottom wood board image
+        this.picBottomBoard.Size = new System.Drawing.Size(800, 220);
+        this.picBottomBoard.Location = new System.Drawing.Point(0, 430);
         this.picBottomBoard.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
         this.picBottomBoard.BackColor = Color.Transparent;
+
+        // 'current show playing' progress track bar - coordinates relative to picBottomBoard
+        this.trackProgress.Location = new System.Drawing.Point(76, -10);
+        this.trackProgress.Size = new System.Drawing.Size(640, 45);
+        this.trackProgress.Minimum = 0;
+        this.trackProgress.Maximum = 100;
+        this.trackProgress.TabStop = false;
+        this.trackProgress.ValueChanged += new System.EventHandler(this.TrackProgress_ValueChanged);
+        this.trackProgress.MouseDown += new System.Windows.Forms.MouseEventHandler(this.TrackProgress_MouseDown);
+        this.trackProgress.MouseUp += new System.Windows.Forms.MouseEventHandler(this.TrackProgress_MouseUp);
 
         // list of shows
         this.lstShows.Location = new System.Drawing.Point(140, 37);
@@ -111,19 +121,19 @@ partial class Form1
         this.lstShows.DoubleClick += new System.EventHandler(this.LstShows_DoubleClick);
         this.lstShows.SelectedIndexChanged += new System.EventHandler(this.LstShows_SelectedIndexChanged);
 
-        // Current path label 
+        // Current path label (Band and Year)
         this.lblCurrentPath.Text = "";
-        this.lblCurrentPath.Location = new System.Drawing.Point(262, 240);
-        this.lblCurrentPath.Size = new System.Drawing.Size(270, 32);
+        this.lblCurrentPath.Location = new System.Drawing.Point(256, 260);
+        this.lblCurrentPath.Size = new System.Drawing.Size(288, 32);
         this.lblCurrentPath.Font = new Font("Times New Roman", 18, FontStyle.Italic);
         this.lblCurrentPath.ForeColor = ColorTranslator.FromHtml("#D2691E");
         this.lblCurrentPath.BackColor = Color.Black;
         this.lblCurrentPath.TextAlign = ContentAlignment.MiddleCenter;
 
-        // Currently playing label
+        // Currently playing label (complete file name)
         this.lblCurrentlyPlaying.Text = "";
-        this.lblCurrentlyPlaying.Location = new System.Drawing.Point(262, 322);
-        this.lblCurrentlyPlaying.Size = new System.Drawing.Size(270, 32);
+        this.lblCurrentlyPlaying.Location = new System.Drawing.Point(256, 346);
+        this.lblCurrentlyPlaying.Size = new System.Drawing.Size(288, 32);
         this.lblCurrentlyPlaying.AutoSize = false;
         this.lblCurrentlyPlaying.Font = new Font("Times New Roman", 8, FontStyle.Bold);
         this.lblCurrentlyPlaying.ForeColor = ColorTranslator.FromHtml("#D2691E");
@@ -132,53 +142,54 @@ partial class Form1
         this.lblCurrentlyPlaying.BorderStyle = BorderStyle.None;
 
         // Collection dial (Bands)
-        this.dialCollection.Location = new System.Drawing.Point(0, 210);
-        // this.dialCollection.Size = new System.Drawing.Size(120, 120);
+        this.dialCollection.Location = new System.Drawing.Point(20, 232);
         this.dialCollection.SelectedIndexChanged += new System.EventHandler(this.DialCollection_SelectedIndexChanged);
 
         // Year dial
-        this.dialYear.Location = new System.Drawing.Point(580, 210);
-        // this.dialYear.Size = new System.Drawing.Size(120, 120);
+        this.dialYear.Location = new System.Drawing.Point(580, 232);
         this.dialYear.SelectedIndexChanged += new System.EventHandler(this.DialYear_SelectedIndexChanged);
 
-        // Progress bar area with square digital time displays
+        // square digital time display (current time of show) - coordinates relative to picBottomBoard
         this.lblCurrentTime.Text = "00:00";
-        this.lblCurrentTime.Location = new System.Drawing.Point(50, 480);
-        this.lblCurrentTime.Size = new System.Drawing.Size(70, 70); // Perfect square
+        this.lblCurrentTime.Location = new System.Drawing.Point(50, 70); // Changed from (50, 500)
+        this.lblCurrentTime.Size = new System.Drawing.Size(70, 70);
 
-        this.trackProgress.Location = new System.Drawing.Point(76, 560);
-        this.trackProgress.Size = new System.Drawing.Size(640, 45);
-        this.trackProgress.Minimum = 0;
-        this.trackProgress.Maximum = 100;
-        this.trackProgress.TabStop = false;
-        this.trackProgress.BackColor = Color.Black;
-        this.trackProgress.ValueChanged += new System.EventHandler(this.TrackProgress_ValueChanged);
-        this.trackProgress.MouseDown += new System.Windows.Forms.MouseEventHandler(this.TrackProgress_MouseDown);
-        this.trackProgress.MouseUp += new System.Windows.Forms.MouseEventHandler(this.TrackProgress_MouseUp);
-
+        // square digital time display (total time duration of show) - coordinates relative to picBottomBoard
         this.lblTotalTime.Text = "00:00";
-        this.lblTotalTime.Location = new System.Drawing.Point(660, 480);
-        this.lblTotalTime.Size = new System.Drawing.Size(70, 70); // Perfect square
-        // Combined Play/Pause button - centered position
+        this.lblTotalTime.Location = new System.Drawing.Point(660, 70); // Changed from (660, 500)
+        this.lblTotalTime.Size = new System.Drawing.Size(70, 70);
+
+        // Combined Play/Pause button - coordinates relative to picBottomBoard
         this.btnPlay.Text = "▶";
-        this.btnPlay.Location = new System.Drawing.Point(284, 478);
+        this.btnPlay.Location = new System.Drawing.Point(280, 68); // Changed from (280, 498)
         this.btnPlay.Size = new System.Drawing.Size(70, 70);
         this.btnPlay.Click += new System.EventHandler(this.BtnPlayPause_Click);
 
-        // Stop button - moved closer to play button
+        // Stop button - coordinates relative to picBottomBoard
         this.btnStop.Text = "⏹";
-        this.btnStop.Location = new System.Drawing.Point(362, 478);
+        this.btnStop.Location = new System.Drawing.Point(368, 68); // Changed from (368, 498)
         this.btnStop.Size = new System.Drawing.Size(70, 70);
         this.btnStop.Click += new System.EventHandler(this.BtnStop_Click);
 
-        // Random button - NEW
+        // Random button - coordinates relative to picBottomBoard
         this.btnRandom.Text = "🎲";
-        this.btnRandom.Location = new System.Drawing.Point(440, 478);
+        this.btnRandom.Location = new System.Drawing.Point(456, 68); // Changed from (456, 498)
         this.btnRandom.Size = new System.Drawing.Size(70, 70);
         this.btnRandom.Font = new Font("Segoe UI Symbol", 24, FontStyle.Bold);
         this.btnRandom.Click += new System.EventHandler(this.BtnRandom_Click);
 
-        // Add all controls to the form
+        // Add all controls to the form - ORDER MATTERS!
+        this.Controls.Add(this.picBottomBoard); // Add parent first
+        
+        // Add all bottom board controls as children of picBottomBoard
+        this.picBottomBoard.Controls.Add(this.trackProgress);
+        this.picBottomBoard.Controls.Add(this.lblCurrentTime);
+        this.picBottomBoard.Controls.Add(this.lblTotalTime);
+        this.picBottomBoard.Controls.Add(this.btnPlay);
+        this.picBottomBoard.Controls.Add(this.btnStop);
+        this.picBottomBoard.Controls.Add(this.btnRandom);
+        
+        // Add remaining controls directly to the form
         this.Controls.Add(this.lstShows);
         this.Controls.Add(this.picScreen);
         this.Controls.Add(this.lblCurrentPath);
@@ -186,13 +197,6 @@ partial class Form1
         this.Controls.Add(this.spinningCassette);
         this.Controls.Add(this.dialCollection);
         this.Controls.Add(this.dialYear);
-        this.Controls.Add(this.lblCurrentTime);
-        this.Controls.Add(this.trackProgress);
-        this.Controls.Add(this.lblTotalTime);
-        this.Controls.Add(this.btnPlay);
-        this.Controls.Add(this.btnStop);
-        this.Controls.Add(this.btnRandom);
-        this.Controls.Add(this.picBottomBoard);
     }
     
     private void SetBackgroundImage()
