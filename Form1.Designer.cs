@@ -103,8 +103,8 @@ partial class Form1
         this.trackProgress.MouseUp += new System.Windows.Forms.MouseEventHandler(this.TrackProgress_MouseUp);
 
         // list of shows
-        this.lstShows.Location = new System.Drawing.Point(140, 37);
-        this.lstShows.Size = new System.Drawing.Size(520, 140);
+        this.lstShows.Location = new System.Drawing.Point(132, 48);
+        this.lstShows.Size = new System.Drawing.Size(518, 150);
         this.lstShows.View = System.Windows.Forms.View.Details;
         this.lstShows.FullRowSelect = true;
         this.lstShows.GridLines = false;
