@@ -19,16 +19,8 @@ namespace MyMusicPlayer
         {
             InitializeComponent();
             SetupCustomListView();
-
-            // Force the form properties after MaterialSkin
-            this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
             this.MinimizeBox = true;
-
-            // Additional override to ensure it sticks
-            this.MinimumSize = new Size(800, 650);
-            this.MaximumSize = new Size(800, 650);
-
             LoadMainFolders();
             UpdateButtonStates();
         }
@@ -55,6 +47,14 @@ namespace MyMusicPlayer
             return mp3Files;
         }
 
+        private void SetupCustomListView()
+        {
+            // Enable custom drawing
+            lstShows.OwnerDraw = true;
+            lstShows.DrawItem += LstShows_DrawItem;
+            lstShows.BorderStyle = BorderStyle.None;
+        }
+        
         private void NavigateToFile(string filePath)
         {
             try
@@ -108,7 +108,7 @@ namespace MyMusicPlayer
                         }
                     }
 
-                    System.Diagnostics.Debug.WriteLine($"Navigated to: {collection} -> {year} -> {fileName}");
+                    Console.WriteLine($"Navigated to: {collection} -> {year} -> {fileName}");
                 }
             }
             catch (Exception ex)
@@ -117,38 +117,49 @@ namespace MyMusicPlayer
             }
         }
 
-        private void SetupCustomListView()
-        {
-            // Enable custom drawing
-            lstShows.OwnerDraw = true;
-            lstShows.DrawItem += LstShows_DrawItem;
-            lstShows.BorderStyle = BorderStyle.None;
-        }
-
         private void LstShows_DrawItem(object? sender, DrawListViewItemEventArgs e)
         {
             // Determine colors based on selection
             Color textColor = Color.White;
-
-            if (e.Item.Selected)
+            
+            // Create rounded rectangle path
+            int cornerRadius = 8; // Adjust this value to make more or less rounded
+            Rectangle itemRect = new Rectangle(e.Bounds.X + 2, e.Bounds.Y + 1, e.Bounds.Width - 4, e.Bounds.Height - 2);
+            
+            using (GraphicsPath path = CreateRoundedRectangle(itemRect, cornerRadius))
             {
-                // Selected item: Same bronze gradient as the buttons
-                using (LinearGradientBrush brush = new LinearGradientBrush(
-                    e.Bounds,
-                    ColorTranslator.FromHtml("#CD853F"), // Sandy brown (lighter)
-                    ColorTranslator.FromHtml("#8B4513"), // Saddle brown (darker)
-                    LinearGradientMode.Vertical))
+                // Enable anti-aliasing for smooth rounded edges
+                e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+                
+                if (e.Item.Selected)
                 {
-                    e.Graphics.FillRectangle(brush, e.Bounds);
+                    // Selected item: Same bronze gradient as the buttons with rounded edges
+                    using (LinearGradientBrush brush = new LinearGradientBrush(
+                        itemRect,
+                        ColorTranslator.FromHtml("#CD853F"), // Sandy brown (lighter)
+                        ColorTranslator.FromHtml("#8B4513"), // Saddle brown (darker)
+                        LinearGradientMode.Vertical))
+                    {
+                        e.Graphics.FillPath(brush, path);
+                    }
+                    
+                    // Optional: Add a subtle border to selected items
+                    using (Pen borderPen = new Pen(ColorTranslator.FromHtml("#A0522D"), 1))
+                    {
+                        e.Graphics.DrawPath(borderPen, path);
+                    }
                 }
-            }
-            else
-            {
-                // Non-selected item: Black background
-                using (SolidBrush backgroundBrush = new SolidBrush(Color.Black))
+                else
                 {
-                    e.Graphics.FillRectangle(backgroundBrush, e.Bounds);
+                    // Non-selected item: Black background with rounded edges
+                    using (SolidBrush backgroundBrush = new SolidBrush(Color.Black))
+                    {
+                        e.Graphics.FillPath(backgroundBrush, path);
+                    }
                 }
+                
+                // Reset smoothing mode for text rendering
+                e.Graphics.SmoothingMode = SmoothingMode.Default;
             }
 
             // Draw the music note icon - CENTERED VERTICALLY
@@ -200,6 +211,28 @@ namespace MyMusicPlayer
 
             // Dispose the icon font
             iconFont.Dispose();
+        }
+
+        // Add this helper method to create rounded rectangles
+        private GraphicsPath CreateRoundedRectangle(Rectangle rect, int cornerRadius)
+        {
+            GraphicsPath path = new GraphicsPath();
+            int diameter = cornerRadius * 2;
+            
+            // Top-left corner
+            path.AddArc(rect.X, rect.Y, diameter, diameter, 180, 90);
+            
+            // Top-right corner
+            path.AddArc(rect.Right - diameter, rect.Y, diameter, diameter, 270, 90);
+            
+            // Bottom-right corner
+            path.AddArc(rect.Right - diameter, rect.Bottom - diameter, diameter, diameter, 0, 90);
+            
+            // Bottom-left corner
+            path.AddArc(rect.X, rect.Bottom - diameter, diameter, diameter, 90, 90);
+            
+            path.CloseFigure();
+            return path;
         }
 
         private void UpdateButtonStates()

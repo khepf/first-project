@@ -5,7 +5,7 @@ using System.Windows.Forms;
 
 namespace MyMusicPlayer
 {
-    public class CustomTrackBar : Control
+    public class TrackBar : Control
     {
         private int _minimum = 0;
         private int _maximum = 100;
@@ -57,7 +57,7 @@ namespace MyMusicPlayer
             }
         }
 
-        public CustomTrackBar()
+        public TrackBar()
         {
             try
             {

@@ -10,7 +10,7 @@ partial class Form1
     private ActionButton btnPlay;
     private ActionButton btnStop;
     private ActionButton btnRandom;
-    private CustomTrackBar trackProgress;
+    private TrackBar trackProgress;
     private DigitalTimeLabel lblCurrentTime;
     private DigitalTimeLabel lblTotalTime;
     private CircularDial dialCollection;
@@ -62,7 +62,7 @@ partial class Form1
         this.btnPlay = new ActionButton();
         this.btnStop = new ActionButton();
         this.btnRandom = new ActionButton();
-        this.trackProgress = new CustomTrackBar();
+        this.trackProgress = new TrackBar();
         this.lblCurrentTime = new DigitalTimeLabel();
         this.lblTotalTime = new DigitalTimeLabel();
         this.dialCollection = new CircularDial();

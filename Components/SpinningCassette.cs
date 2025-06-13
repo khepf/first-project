@@ -13,7 +13,7 @@ public class SpinningCassette : Control
     private bool isSpinning = false;
 
     // Define the wheel positions (you'll need to adjust these based on your cassette image)
-    private Rectangle leftWheelRect = new Rectangle(81, 63, 50, 50);   // Adjust position/size
+    private Rectangle leftWheelRect = new Rectangle(82, 63, 50, 50);   // Adjust position/size
     private Rectangle rightWheelRect = new Rectangle(224, 63, 50, 50); // Adjust position/size
 
     public SpinningCassette()
