@@ -1,16 +1,9 @@
-using System;
-using System.IO;
-using System.Linq;
-using System.Windows.Forms;
 using NAudio.Wave;
-using MaterialSkin;
-using MaterialSkin.Controls;
-using System.Drawing;
 using System.Drawing.Drawing2D;
 
 namespace MyMusicPlayer
 {
-    public partial class Form1 : Form  // Keep as Form
+    public partial class Form1 : Form
     {
         private readonly string musicLibraryPath = @"C:\CODE\garcia\Music";
         private WaveOutEvent? outputDevice;
@@ -25,11 +18,9 @@ namespace MyMusicPlayer
         public Form1()
         {
             InitializeComponent();
-
-            // Set up custom list view drawing for bronze selection
             SetupCustomListView();
 
-            // Force the form properties after MaterialSkin (more aggressive)
+            // Force the form properties after MaterialSkin
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
             this.MinimizeBox = true;
@@ -40,38 +31,6 @@ namespace MyMusicPlayer
 
             LoadMainFolders();
             UpdateButtonStates();
-        }
-
-        private void BtnRandom_Click(object? sender, EventArgs e)
-        {
-            try
-            {
-                // Get all MP3 files from the entire music library
-                List<string> allMp3Files = GetAllMp3Files(musicLibraryPath);
-
-                if (allMp3Files.Count == 0)
-                {
-                    MessageBox.Show("No MP3 files found in the music library!",
-                                "No Music Found", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    return;
-                }
-
-                // Pick a random file
-                string randomFile = allMp3Files[random.Next(allMp3Files.Count)];
-
-                // Update the dials and list to show the selected file's location
-                NavigateToFile(randomFile);
-
-                // Play the random file
-                PlayShow(randomFile);
-
-                System.Diagnostics.Debug.WriteLine($"Random play: {randomFile}");
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error playing random show: {ex.Message}",
-                            "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
         }
 
         private List<string> GetAllMp3Files(string rootPath)
@@ -277,12 +236,11 @@ namespace MyMusicPlayer
             dialYear.ClearItems();
             lstShows.Items.Clear();
 
-
             // Try multiple possible paths
             string[] possiblePaths = {
-                Path.Combine(Application.StartupPath, "Images", "knob3.png"),
-                Path.Combine(Directory.GetCurrentDirectory(), "Images", "knob3.png"),
-                Path.Combine(Directory.GetParent(Application.StartupPath)?.Parent?.Parent?.FullName ?? Application.StartupPath, "Images", "knob3.png")
+                Path.Combine(Application.StartupPath, "Images", "knob.png"),
+                Path.Combine(Directory.GetCurrentDirectory(), "Images", "knob.png"),
+                Path.Combine(Directory.GetParent(Application.StartupPath)?.Parent?.Parent?.FullName ?? Application.StartupPath, "Images", "knob.png")
             };
 
             bool imageLoaded = false;
@@ -354,7 +312,7 @@ namespace MyMusicPlayer
                 dialImage.Dispose();
             }
 
-            // Load cassette image
+            // Load cassette image - CHANGED FROM picCassette to spinningCassette
             string[] cassettePaths = {
                 Path.Combine(Application.StartupPath, "Images", "cassette.png"),
                 Path.Combine(Directory.GetCurrentDirectory(), "Images", "cassette.png"),
@@ -370,7 +328,7 @@ namespace MyMusicPlayer
                 {
                     try
                     {
-                        picCassette.Image = Image.FromFile(path);
+                        spinningCassette.CassetteImage = Image.FromFile(path);
                         System.Diagnostics.Debug.WriteLine($"SUCCESS! Cassette image loaded from: {path}");
                         cassetteLoaded = true;
                         break;
@@ -385,8 +343,7 @@ namespace MyMusicPlayer
             if (!cassetteLoaded)
             {
                 System.Diagnostics.Debug.WriteLine("Cassette image not found!");
-                // Optionally hide the PictureBox if image not found
-                picCassette.Visible = false;
+                spinningCassette.Visible = false;
             }
 
             string[] bottomBoardPaths = {
@@ -462,7 +419,7 @@ namespace MyMusicPlayer
                 var yearFolders = Directory.GetDirectories(mainFolderPath)
                     .Select(dir => Path.GetFileName(dir))
                     .Where(name => int.TryParse(name, out _)) // Only include folders that are numeric (years)
-                    .OrderByDescending(year => int.Parse(year)) // Sort years in descending order (newest first)
+                    .OrderBy(year => int.Parse(year))
                     .ToList();
 
                 foreach (string year in yearFolders)
@@ -502,17 +459,15 @@ namespace MyMusicPlayer
                 var mp3Files = Directory.GetFiles(currentFolderPath, "*.mp3");
                 foreach (var mp3File in mp3Files)
                 {
-                    string showName = Path.GetFileNameWithoutExtension(mp3File); // Remove .mp3 extension
+                    string showName = Path.GetFileNameWithoutExtension(mp3File);
                     string showItem = "🎵 " + showName;
 
                     // For MaterialListView, we need to create ListViewItems
                     var listItem = new ListViewItem(showItem);
                     lstShows.Items.Add(listItem);
                 }
-
-                System.Diagnostics.Debug.WriteLine($"Loaded {mp3Files.Length} shows from {currentFolderPath}");
             }
-            UpdateButtonStates(); // Update after loading shows
+            UpdateButtonStates();
         }
 
         private void LstShows_DoubleClick(object? sender, EventArgs e)
@@ -522,12 +477,17 @@ namespace MyMusicPlayer
                 string selectedItem = lstShows.SelectedItems[0].Text ?? "";
                 if (selectedItem.StartsWith("🎵 "))
                 {
-                    string showName = selectedItem.Substring(2); // Remove music icon
-                    string showPath = Path.Combine(currentFolderPath, showName + ".mp3"); // Add .mp3 back
+                    string showName = selectedItem.Substring(2).Trim(); // Remove the emoji and trim whitespace
+                    string showPath = Path.Combine(currentFolderPath, showName + ".mp3"); // Construct the full file path
 
                     if (File.Exists(showPath))
                     {
-                        PlayShow(showPath);
+                        PlayShow(showPath); // Play the selected show
+                    }
+                    else
+                    {
+                        MessageBox.Show($"The file '{showName}.mp3' could not be found in the folder '{currentFolderPath}'.",
+                                        "File Not Found", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     }
                 }
             }
@@ -553,7 +513,8 @@ namespace MyMusicPlayer
             outputDevice.Init(audioFile);
             outputDevice.Play();
             isPaused = false;
-            btnPlay.Text = "⏸";  // Set to pause icon when playing
+            btnPlay.Text = "⏸";
+            spinningCassette.IsSpinning = true;
 
             // UPDATE THE CURRENTLY PLAYING LABEL
             string fileName = Path.GetFileNameWithoutExtension(filePath);
@@ -606,7 +567,8 @@ namespace MyMusicPlayer
                 // Check if show has ended
                 if (outputDevice.PlaybackState == PlaybackState.Stopped && trackProgress.Value > 0)
                 {
-                    btnPlay.Text = "▶";  // Reset to play icon when show ends
+                    btnPlay.Text = "▶";
+                    spinningCassette.IsSpinning = false; 
                     BtnStop_Click(sender, e);
                 }
             }
@@ -672,6 +634,7 @@ namespace MyMusicPlayer
                 isPaused = true;
                 btnPlay.Text = "▶";  // Change to play icon
                 progressTimer?.Stop();
+                spinningCassette.IsSpinning = false;
             }
             // If currently paused, resume it
             else if (outputDevice?.PlaybackState == PlaybackState.Paused)
@@ -681,6 +644,7 @@ namespace MyMusicPlayer
                 btnPlay.Text = "⏸";  // Change to pause icon
                 if (!isUserDragging)
                     progressTimer?.Start();
+                spinningCassette.IsSpinning = true;
             }
             // If stopped but we have a loaded show, restart from beginning
             else if (!string.IsNullOrEmpty(currentShowPath) && File.Exists(currentShowPath))
@@ -710,10 +674,43 @@ namespace MyMusicPlayer
 
             // CLEAR BOTH LABELS WHEN STOPPED
             lblCurrentlyPlaying.Text = "";
-            lblCurrentPath.Text = ""; // ADD THIS LINE
+            lblCurrentPath.Text = "";
+            spinningCassette.IsSpinning = false;
 
             isUserDragging = false;
             UpdateButtonStates();
+        }
+
+        private void BtnRandom_Click(object? sender, EventArgs e)
+        {
+            try
+            {
+                // Get all MP3 files from the entire music library
+                List<string> allMp3Files = GetAllMp3Files(musicLibraryPath);
+
+                if (allMp3Files.Count == 0)
+                {
+                    MessageBox.Show("No MP3 files found in the music library!",
+                                "No Music Found", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+
+                // Pick a random file
+                string randomFile = allMp3Files[random.Next(allMp3Files.Count)];
+
+                // Update the dials and list to show the selected file's location
+                NavigateToFile(randomFile);
+
+                // Play the random file
+                PlayShow(randomFile);
+
+                System.Diagnostics.Debug.WriteLine($"Random play: {randomFile}");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error playing random show: {ex.Message}",
+                            "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private string FormatTime(TimeSpan time)

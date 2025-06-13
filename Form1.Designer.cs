@@ -7,20 +7,20 @@ partial class Form1
     /// </summary>
     private System.ComponentModel.IContainer components = null;
 
-    private RoundedButton btnPlay;
-    private RoundedButton btnStop;
-    private RoundedButton btnRandom;
+    private ActionButton btnPlay;
+    private ActionButton btnStop;
+    private ActionButton btnRandom;
     private CustomTrackBar trackProgress;
     private DigitalTimeLabel lblCurrentTime;
     private DigitalTimeLabel lblTotalTime;
-    private StringCircularDial dialCollection;
-    private StringCircularDial dialYear;
+    private CircularDial dialCollection;
+    private CircularDial dialYear;
     private System.Windows.Forms.ListView lstShows;
     private System.Windows.Forms.Label lblCurrentPath;
     private System.Windows.Forms.Label lblCurrentlyPlaying;
-    private System.Windows.Forms.PictureBox picCassette;
     private System.Windows.Forms.PictureBox picBottomBoard;
-    private System.Windows.Forms.PictureBox picScreen; // Added screen PictureBox
+    private System.Windows.Forms.PictureBox picScreen;
+    private SpinningCassette spinningCassette;
 
     /// <summary>
     ///  Clean up any resources being used.
@@ -59,20 +59,20 @@ partial class Form1
         this.Location = new System.Drawing.Point(1920, 200);
 
         // Initialize Material UI Components
-        this.btnPlay = new RoundedButton();
-        this.btnStop = new RoundedButton();
-        this.btnRandom = new RoundedButton(); 
+        this.btnPlay = new ActionButton();
+        this.btnStop = new ActionButton();
+        this.btnRandom = new ActionButton();
         this.trackProgress = new CustomTrackBar();
         this.lblCurrentTime = new DigitalTimeLabel();
         this.lblTotalTime = new DigitalTimeLabel();
-        this.dialCollection = new StringCircularDial();
-        this.dialYear = new StringCircularDial();
+        this.dialCollection = new CircularDial();
+        this.dialYear = new CircularDial();
         this.lstShows = new System.Windows.Forms.ListView();
         this.lblCurrentPath = new System.Windows.Forms.Label();
         this.lblCurrentlyPlaying = new System.Windows.Forms.Label();
-        this.picCassette = new System.Windows.Forms.PictureBox();
         this.picBottomBoard = new System.Windows.Forms.PictureBox();
-        this.picScreen = new System.Windows.Forms.PictureBox(); // Initialize screen PictureBox
+        this.picScreen = new System.Windows.Forms.PictureBox();
+        this.spinningCassette = new SpinningCassette();
 
         // Screen image
         this.picScreen.Size = new System.Drawing.Size(650, 200);
@@ -81,21 +81,20 @@ partial class Form1
         this.picScreen.BackColor = Color.Transparent;
         LoadScreenImage();
 
-        // Cassette image
-        this.picCassette.Size = new System.Drawing.Size(360, 200);
-        this.picCassette.Location = new System.Drawing.Point(220, 210);
-        this.picCassette.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
-        this.picCassette.BackColor = Color.Transparent;
+        // Spinning Cassette
+        this.spinningCassette.Size = new System.Drawing.Size(360, 200);
+        this.spinningCassette.Location = new System.Drawing.Point(220, 210);
+        this.spinningCassette.BackColor = Color.Transparent;
 
         // bottom board image
-        this.picBottomBoard.Size = new System.Drawing.Size(784, 220); // Adjust size as needed
+        this.picBottomBoard.Size = new System.Drawing.Size(790, 220); // Adjust size as needed
         this.picBottomBoard.Location = new System.Drawing.Point(0, 410); // Position at the bottom
         this.picBottomBoard.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
         this.picBottomBoard.BackColor = Color.Transparent;
 
         // list of shows
-        this.lstShows.Location = new System.Drawing.Point(150, 37);
-        this.lstShows.Size = new System.Drawing.Size(500, 140);
+        this.lstShows.Location = new System.Drawing.Point(140, 37);
+        this.lstShows.Size = new System.Drawing.Size(520, 140);
         this.lstShows.View = System.Windows.Forms.View.Details;
         this.lstShows.FullRowSelect = true;
         this.lstShows.GridLines = false;
@@ -179,85 +178,80 @@ partial class Form1
         this.btnRandom.Font = new Font("Segoe UI Symbol", 24, FontStyle.Bold);
         this.btnRandom.Click += new System.EventHandler(this.BtnRandom_Click);
 
-        // Add controls to the form
+        // Add all controls to the form
         this.Controls.Add(this.lstShows);
         this.Controls.Add(this.picScreen);
-        this.Controls.Add(this.btnPlay);
-        this.Controls.Add(this.btnStop);
-        this.Controls.Add(this.btnRandom); 
-        this.Controls.Add(this.trackProgress);
+        this.Controls.Add(this.lblCurrentPath);
+        this.Controls.Add(this.lblCurrentlyPlaying);
+        this.Controls.Add(this.spinningCassette);
         this.Controls.Add(this.dialCollection);
         this.Controls.Add(this.dialYear);
-        this.Controls.Add(this.lblCurrentPath);
-        this.Controls.Add(this.picCassette);
         this.Controls.Add(this.lblCurrentTime);
+        this.Controls.Add(this.trackProgress);
         this.Controls.Add(this.lblTotalTime);
+        this.Controls.Add(this.btnPlay);
+        this.Controls.Add(this.btnStop);
+        this.Controls.Add(this.btnRandom);
         this.Controls.Add(this.picBottomBoard);
-        this.Controls.Add(this.lblCurrentlyPlaying);
-
-        this.lblCurrentlyPlaying.BringToFront();
-        this.lblCurrentlyPlaying.Visible = true;
-
-        // Resume layout
-        this.ResumeLayout(false);
-        this.PerformLayout();
     }
     
     private void SetBackgroundImage()
     {
-        // Try multiple possible paths for background.png
-        string[] possiblePaths = {
+        bool imageLoaded = false;
+        
+        string[] imagePaths = {
             Path.Combine(Application.StartupPath, "Images", "background.png"),
             Path.Combine(Directory.GetCurrentDirectory(), "Images", "background.png"),
             Path.Combine(Directory.GetParent(Application.StartupPath)?.Parent?.Parent?.FullName ?? Application.StartupPath, "Images", "background.png")
         };
-        
-        bool imageLoaded = false;
-        
-        foreach (var path in possiblePaths)
+
+        foreach (var path in imagePaths)
         {
+            System.Diagnostics.Debug.WriteLine($"Trying background path: {path}");
+            
             if (File.Exists(path))
             {
                 try
                 {
                     this.BackgroundImage = Image.FromFile(path);
                     this.BackgroundImageLayout = ImageLayout.Stretch;
+                    System.Diagnostics.Debug.WriteLine($"SUCCESS! Background image loaded from: {path}");
                     imageLoaded = true;
                     break;
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // If loading fails, continue to next path
+                    System.Diagnostics.Debug.WriteLine($"Error loading background image from {path}: {ex.Message}");
                 }
             }
         }
         
         if (!imageLoaded)
         {
-            // Fallback to solid color if image not found
-            this.BackColor = Color.FromArgb(20, 20, 20); // Dark gray
+            System.Diagnostics.Debug.WriteLine("Background image not found!");
+            this.BackColor = Color.Black;
         }
     }
 
     private void LoadScreenImage()
     {
-        // Try multiple possible paths for screen.png
+        bool screenLoaded = false;
+        
         string[] screenPaths = {
             Path.Combine(Application.StartupPath, "Images", "screen.png"),
             Path.Combine(Directory.GetCurrentDirectory(), "Images", "screen.png"),
             Path.Combine(Directory.GetParent(Application.StartupPath)?.Parent?.Parent?.FullName ?? Application.StartupPath, "Images", "screen.png")
         };
 
-        bool screenLoaded = false;
         foreach (var path in screenPaths)
         {
-            System.Diagnostics.Debug.WriteLine($"Trying screen image path: {path}");
+            System.Diagnostics.Debug.WriteLine($"Trying screen path: {path}");
             
             if (File.Exists(path))
             {
                 try
                 {
-                    picScreen.Image = Image.FromFile(path);
+                    this.picScreen.Image = Image.FromFile(path);
                     System.Diagnostics.Debug.WriteLine($"SUCCESS! Screen image loaded from: {path}");
                     screenLoaded = true;
                     break;
@@ -268,11 +262,11 @@ partial class Form1
                 }
             }
         }
-
+        
         if (!screenLoaded)
         {
             System.Diagnostics.Debug.WriteLine("Screen image not found!");
-            picScreen.Visible = false;
+            this.picScreen.Visible = false;
         }
     }
 

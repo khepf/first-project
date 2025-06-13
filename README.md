@@ -1,0 +1,1 @@
+- Double Click To Play List Of Shows doesn't work. LstShows_DoubleClick

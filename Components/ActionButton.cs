@@ -5,11 +5,11 @@ using System.Windows.Forms;
 
 namespace MyMusicPlayer
 {
-    public class RoundedButton : Button
+    public class ActionButton : Button
     {
         public int BorderRadius { get; set; } = 15; // Adjust this value for more/less rounding
 
-        public RoundedButton()
+        public ActionButton()
         {
             SetStyle(ControlStyles.AllPaintingInWmPaint |
                      ControlStyles.UserPaint |

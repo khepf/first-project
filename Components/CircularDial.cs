@@ -4,7 +4,7 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 
-public class StringCircularDial : Control
+public class CircularDial : Control
 {
     private int _selectedIndex = 0;
     private List<string> _items = new List<string>();
@@ -71,7 +71,7 @@ public class StringCircularDial : Control
 
     public event EventHandler? SelectedIndexChanged;
 
-    public StringCircularDial()
+    public CircularDial()
     {
         SetStyle(ControlStyles.AllPaintingInWmPaint | 
                 ControlStyles.UserPaint | 
