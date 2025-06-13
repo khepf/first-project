@@ -498,7 +498,7 @@ namespace MyMusicPlayer
             UpdateButtonStates(); // Update button states when selection changes
         }
 
-        private void PlayShow(string filePath)
+        private void PlayShow(string filePath, TimeSpan? startPosition = null)
         {
             // Stop any current playback and timer
             outputDevice?.Stop();
@@ -510,6 +510,13 @@ namespace MyMusicPlayer
             currentShowPath = filePath;
             outputDevice = new WaveOutEvent();
             audioFile = new AudioFileReader(filePath);
+
+            // Set the starting position if provided
+            if (startPosition.HasValue && startPosition.Value < audioFile.TotalTime)
+            {
+                audioFile.CurrentTime = startPosition.Value;
+            }
+
             outputDevice.Init(audioFile);
             outputDevice.Play();
             isPaused = false;
@@ -520,7 +527,7 @@ namespace MyMusicPlayer
             string fileName = Path.GetFileNameWithoutExtension(filePath);
             lblCurrentlyPlaying.Text = $"♪ Now Playing: {fileName}";
 
-            // UPDATE THE PATH LABEL TO SHOW CURRENT SELECTION - ADD THIS
+            // UPDATE THE PATH LABEL TO SHOW CURRENT SELECTION
             if (dialCollection.SelectedItem != null && dialYear.SelectedItem != null)
             {
                 lblCurrentPath.Text = $"{dialCollection.SelectedItem} ➤ {dialYear.SelectedItem}";
@@ -701,10 +708,13 @@ namespace MyMusicPlayer
                 // Update the dials and list to show the selected file's location
                 NavigateToFile(randomFile);
 
-                // Play the random file
-                PlayShow(randomFile);
+                // Pick a random starting position within the file's duration
+                TimeSpan randomStartPosition = TimeSpan.FromSeconds(random.Next(0, (int)new AudioFileReader(randomFile).TotalTime.TotalSeconds));
 
-                System.Diagnostics.Debug.WriteLine($"Random play: {randomFile}");
+                // Play the random file starting at the random position
+                PlayShow(randomFile, randomStartPosition);
+
+                System.Diagnostics.Debug.WriteLine($"Random play: {randomFile} starting at {randomStartPosition}");
             }
             catch (Exception ex)
             {
