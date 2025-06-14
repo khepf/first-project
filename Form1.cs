@@ -5,7 +5,7 @@ namespace MyMusicPlayer
 {
     public partial class Form1 : Form
     {
-        private readonly string musicLibraryPath = @"C:\CODE\garcia\Music";
+        private string musicLibraryPath = GetMusicLibraryPath();
         private WaveOutEvent? outputDevice;
         private AudioFileReader? audioFile;
         private bool isPaused = false;
@@ -21,8 +21,13 @@ namespace MyMusicPlayer
             SetupCustomListView();
             MaximizeBox = false;
             MinimizeBox = true;
+            LoadImages(); // Load images first, regardless of music library
             LoadMainFolders();
             UpdateButtonStates();
+        }
+        private static string GetMusicLibraryPath()
+        {
+        return string.Empty;
         }
 
         private List<string> GetAllMp3Files(string rootPath)
@@ -233,13 +238,9 @@ namespace MyMusicPlayer
             return path;
         }
 
-        private void LoadMainFolders()
+        private void LoadImages()
         {
-            dialCollection.ClearItems();
-            dialYear.ClearItems();
-            lstShows.Items.Clear();
-
-            // Try multiple possible paths
+            // Try multiple possible paths for dial image
             string[] possiblePaths = {
                 Path.Combine(Application.StartupPath, "Images", "knob.png"),
                 Path.Combine(Directory.GetCurrentDirectory(), "Images", "knob.png"),
@@ -250,7 +251,6 @@ namespace MyMusicPlayer
 
             foreach (var path in possiblePaths)
             {
-
                 if (File.Exists(path))
                 {
                     try
@@ -310,6 +310,7 @@ namespace MyMusicPlayer
                 spinningCassette.Visible = false;
             }
 
+            // Load bottom board image
             string[] bottomBoardPaths = {
                 Path.Combine(Application.StartupPath, "Images", "bottomboard.png"),
                 Path.Combine(Directory.GetCurrentDirectory(), "Images", "bottomboard.png"),
@@ -331,32 +332,119 @@ namespace MyMusicPlayer
                     }
                 }
             }
+        }
 
+        private void LoadMainFolders()
+        {
+            dialCollection.ClearItems();
+            dialYear.ClearItems();
+            lstShows.Items.Clear();
 
-            if (!Directory.Exists(musicLibraryPath))
+            Console.WriteLine($"Music library path: '{musicLibraryPath}'");
+            Console.WriteLine($"Directory exists: {Directory.Exists(musicLibraryPath)}");
+
+            // Check if music library path is set and exists
+            if (string.IsNullOrEmpty(musicLibraryPath))
             {
-                Directory.CreateDirectory(musicLibraryPath);
-                MessageBox.Show($"Created music library at: {musicLibraryPath}\nAdd your two main collection folders here.",
-                               "Music Library Created", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                UpdateButtonStates(); // Update after clearing
+                Console.WriteLine("No music library path set. Use Settings button to select a folder.");
+                // Display greeting when no music library is set
+                var greetingItem1 = new ListViewItem("GREETINGS PROFESSOR FALKEN,");
+                var greetingItem2 = new ListViewItem("SHALL WE PLAY SOME MUSIC?");
+                lstShows.Items.Add(greetingItem1);
+                lstShows.Items.Add(greetingItem2);
+                UpdateButtonStates();
                 return;
             }
 
-            // Load main folders
-            var mainFolders = Directory.GetDirectories(musicLibraryPath);
-            foreach (var folder in mainFolders)
+            if (Directory.Exists(musicLibraryPath))
             {
-                string folderName = Path.GetFileName(folder);
-                dialCollection.AddItem(folderName);
+                var mf = Directory.GetDirectories(musicLibraryPath);
+                Console.WriteLine($"Found {mf.Length} main folders");
+
+                foreach (var folder in mf)
+                {
+                    string folderName = Path.GetFileName(folder);
+                    Console.WriteLine($"Adding folder: {folderName}");
+                    dialCollection.AddItem(folderName);
+                }
+
+                // Select the first folder if available
+                if (dialCollection.Items.Count > 0)
+                {
+                    dialCollection.SelectedIndex = 0;
+                }
+                else
+                {
+                    // No folders found, display greeting
+                    var greetingItem1 = new ListViewItem("GREETINGS PROFESSOR FALKEN,");
+                    var greetingItem2 = new ListViewItem("SHALL WE PLAY SOME MUSIC?");
+                    lstShows.Items.Add(greetingItem1);
+                    lstShows.Items.Add(greetingItem2);
+                }
+            }
+            else
+            {
+                Console.WriteLine($"Music directory does not exist: {musicLibraryPath}");
+                // Display greeting when music directory doesn't exist
+                var greetingItem1 = new ListViewItem("GREETINGS PROFESSOR FALKEN,");
+                var greetingItem2 = new ListViewItem("SHALL WE PLAY SOME MUSIC?");
+                lstShows.Items.Add(greetingItem1);
+                lstShows.Items.Add(greetingItem2);
             }
 
-            // Select the first folder if available
-            if (dialCollection.Items.Count > 0)
-            {
-                dialCollection.SelectedIndex = 0;
-            }
+            UpdateButtonStates();
+        }
 
-            UpdateButtonStates(); // Update after loading
+        private void BtnSettings_Click(object? sender, EventArgs e)
+        {
+            using (FolderBrowserDialog folderDialog = new FolderBrowserDialog())
+            {
+                folderDialog.Description = "Select your Music Library folder";
+                folderDialog.SelectedPath = musicLibraryPath;
+                folderDialog.ShowNewFolderButton = true;
+
+                if (folderDialog.ShowDialog() == DialogResult.OK)
+                {
+                    string newPath = folderDialog.SelectedPath;
+                    
+                    // Validate that the selected folder contains music folders
+                    if (Directory.Exists(newPath))
+                    {
+                        var subFolders = Directory.GetDirectories(newPath);
+                        
+                        if (subFolders.Length == 0)
+                        {
+                            DialogResult result = MessageBox.Show(
+                                $"The selected folder appears to be empty.\n\nDo you want to use it anyway?\n\nPath: {newPath}",
+                                "Empty Folder", 
+                                MessageBoxButtons.YesNo, 
+                                MessageBoxIcon.Question);
+                                
+                            if (result == DialogResult.No)
+                                return;
+                        }
+                        
+                        // Update the music library path
+                        musicLibraryPath = newPath;
+                        Console.WriteLine($"Music library path changed to: {musicLibraryPath}");
+                        
+                        // Reload the entire interface with the new path
+                        LoadMainFolders();
+                        
+                        MessageBox.Show($"Music library path updated to:\n{musicLibraryPath}", 
+                                    "Settings Updated", 
+                                    MessageBoxButtons.OK, 
+                                    MessageBoxIcon.Information);
+                    }
+                    else
+                    {
+                        MessageBox.Show("The selected folder does not exist!", 
+                                    "Invalid Folder", 
+                                    MessageBoxButtons.OK, 
+                                    MessageBoxIcon.Error);
+                    }
+                }
+            }
         }
 
         private void UpdateButtonStates()
@@ -365,7 +453,9 @@ namespace MyMusicPlayer
             bool hasLoadedFile = !string.IsNullOrEmpty(currentShowPath) && File.Exists(currentShowPath);
             bool isPlaying = outputDevice?.PlaybackState == PlaybackState.Playing;
             bool isPausedState = outputDevice?.PlaybackState == PlaybackState.Paused;
-            bool hasMusicLibrary = Directory.Exists(musicLibraryPath) && GetAllMp3Files(musicLibraryPath).Count > 0;
+            bool hasMusicLibrary = !string.IsNullOrEmpty(musicLibraryPath) &&
+                                Directory.Exists(musicLibraryPath) &&
+                                GetAllMp3Files(musicLibraryPath).Count > 0;
 
             // Enable Play/Pause button if there's a selected item, loaded file, or something playing/paused
             btnPlay.Enabled = hasSelectedItem || hasLoadedFile || isPlaying || isPausedState;
@@ -440,7 +530,16 @@ namespace MyMusicPlayer
         {
             lstShows.Items.Clear();
 
-            if (dialCollection.SelectedItem == null || dialYear.SelectedItem == null) return;
+            if (dialCollection.SelectedItem == null || dialYear.SelectedItem == null) 
+            {
+                // Display greeting when no collection or year is selected
+                var greetingItem1 = new ListViewItem("GREETINGS PROFESSOR FALKEN,");
+                var greetingItem2 = new ListViewItem("SHALL WE PLAY SOME MUSIC?");
+                lstShows.Items.Add(greetingItem1);
+                lstShows.Items.Add(greetingItem2);
+                UpdateButtonStates();
+                return;
+            }
 
             string selectedMainFolder = dialCollection.SelectedItem;
             string selectedYear = dialYear.SelectedItem;
@@ -449,16 +548,37 @@ namespace MyMusicPlayer
             if (Directory.Exists(currentFolderPath))
             {
                 var mp3Files = Directory.GetFiles(currentFolderPath, "*.mp3");
-                foreach (var mp3File in mp3Files)
+                
+                if (mp3Files.Length == 0)
                 {
-                    string showName = Path.GetFileNameWithoutExtension(mp3File);
-                    string showItem = "🎵 " + showName;
+                    // Display greeting when folder exists but has no MP3 files
+                    var greetingItem1 = new ListViewItem("GREETINGS PROFESSOR FALKEN,");
+                    var greetingItem2 = new ListViewItem("SHALL WE PLAY SOME MUSIC?");
+                    lstShows.Items.Add(greetingItem1);
+                    lstShows.Items.Add(greetingItem2);
+                }
+                else
+                {
+                    foreach (var mp3File in mp3Files)
+                    {
+                        string showName = Path.GetFileNameWithoutExtension(mp3File);
+                        string showItem = "🎵 " + showName;
 
-                    // For MaterialListView, we need to create ListViewItems
-                    var listItem = new ListViewItem(showItem);
-                    lstShows.Items.Add(listItem);
+                        // For MaterialListView, we need to create ListViewItems
+                        var listItem = new ListViewItem(showItem);
+                        lstShows.Items.Add(listItem);
+                    }
                 }
             }
+            else
+            {
+                // Display greeting when folder doesn't exist
+                var greetingItem1 = new ListViewItem("GREETINGS PROFESSOR FALKEN,");
+                var greetingItem2 = new ListViewItem("SHALL WE PLAY SOME MUSIC?");
+                lstShows.Items.Add(greetingItem1);
+                lstShows.Items.Add(greetingItem2);
+            }
+            
             UpdateButtonStates();
         }
 
@@ -467,6 +587,14 @@ namespace MyMusicPlayer
             if (lstShows.SelectedItems.Count > 0)
             {
                 string selectedItem = lstShows.SelectedItems[0].Text ?? "";
+                
+                // Prevent double-click on greeting messages
+                if (selectedItem == "GREETINGS PROFESSOR FALKEN," || 
+                    selectedItem == "SHALL WE PLAY SOME MUSIC?")
+                {
+                    return; // Do nothing for greeting messages
+                }
+                
                 if (selectedItem.StartsWith("🎵 "))
                 {
                     string showName = selectedItem.Substring(2).Trim(); // Remove the emoji and trim whitespace
@@ -487,6 +615,19 @@ namespace MyMusicPlayer
 
         private void LstShows_SelectedIndexChanged(object? sender, EventArgs e)
         {
+            // Prevent selection of greeting messages
+            if (lstShows.SelectedItems.Count > 0)
+            {
+                string selectedText = lstShows.SelectedItems[0].Text;
+                if (selectedText == "GREETINGS PROFESSOR FALKEN," || 
+                    selectedText == "SHALL WE PLAY SOME MUSIC?")
+                {
+                    // Clear the selection for greeting messages
+                    lstShows.SelectedItems[0].Selected = false;
+                    return;
+                }
+            }
+            
             UpdateButtonStates(); // Update button states when selection changes
         }
 

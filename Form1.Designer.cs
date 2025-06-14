@@ -6,7 +6,7 @@ partial class Form1
     ///  Required designer variable.
     /// </summary>
     private System.ComponentModel.IContainer components = null;
-
+    private ActionButton btnSettings;
     private ActionButton btnPlay;
     private ActionButton btnStop;
     private ActionButton btnRandom;
@@ -59,6 +59,7 @@ partial class Form1
         this.Location = new System.Drawing.Point(1920, 200);
 
         // Initialize Material UI Components
+        this.btnSettings = new ActionButton();
         this.btnPlay = new ActionButton();
         this.btnStop = new ActionButton();
         this.btnRandom = new ActionButton();
@@ -73,6 +74,13 @@ partial class Form1
         this.picBottomBoard = new System.Windows.Forms.PictureBox();
         this.picScreen = new System.Windows.Forms.PictureBox();
         this.spinningCassette = new SpinningCassette();
+
+            // Settings button - top right corner
+        this.btnSettings.Text = "⚙";
+        this.btnSettings.Location = new System.Drawing.Point(750, 10);
+        this.btnSettings.Size = new System.Drawing.Size(40, 40);
+        this.btnSettings.Font = new Font("Segoe UI Symbol", 16, FontStyle.Bold);
+        this.btnSettings.Click += new System.EventHandler(this.BtnSettings_Click);
 
         // TV Screen image
         this.picScreen.Size = new System.Drawing.Size(650, 220);
@@ -188,8 +196,9 @@ partial class Form1
         this.picBottomBoard.Controls.Add(this.btnPlay);
         this.picBottomBoard.Controls.Add(this.btnStop);
         this.picBottomBoard.Controls.Add(this.btnRandom);
-        
+
         // Add remaining controls directly to the form
+        this.Controls.Add(this.btnSettings);
         this.Controls.Add(this.lstShows);
         this.Controls.Add(this.picScreen);
         this.Controls.Add(this.lblCurrentPath);
