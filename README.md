@@ -1,1 +1,1 @@
-- Double Click To Play List Of Shows doesn't work. LstShows_DoubleClick
+dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true

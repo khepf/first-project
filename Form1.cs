@@ -21,13 +21,36 @@ namespace MyMusicPlayer
             SetupCustomListView();
             MaximizeBox = false;
             MinimizeBox = true;
-            LoadImages(); // Load images first, regardless of music library
+            LoadImages();
             LoadMainFolders();
             UpdateButtonStates();
         }
+        
+        private Image? LoadEmbeddedImage(string imageName)
+        {
+            try
+            {
+                var assembly = System.Reflection.Assembly.GetExecutingAssembly();
+                string resourceName = $"MyMusicPlayer.Images.{imageName}";
+                
+                using (var stream = assembly.GetManifestResourceStream(resourceName))
+                {
+                    if (stream != null)
+                    {
+                        return Image.FromStream(stream);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error loading embedded image {imageName}: {ex.Message}");
+            }
+            
+            return null;
+        }
         private static string GetMusicLibraryPath()
         {
-        return string.Empty;
+            return string.Empty;
         }
 
         private List<string> GetAllMp3Files(string rootPath)
@@ -240,97 +263,34 @@ namespace MyMusicPlayer
 
         private void LoadImages()
         {
-            // Try multiple possible paths for dial image
-            string[] possiblePaths = {
-                Path.Combine(Application.StartupPath, "Images", "knob.png"),
-                Path.Combine(Directory.GetCurrentDirectory(), "Images", "knob.png"),
-                Path.Combine(Directory.GetParent(Application.StartupPath)?.Parent?.Parent?.FullName ?? Application.StartupPath, "Images", "knob.png")
-            };
-
-            Image? dialImage = null;
-
-            foreach (var path in possiblePaths)
-            {
-                if (File.Exists(path))
-                {
-                    try
-                    {
-                        dialImage = Image.FromFile(path);
-                        break;
-                    }
-                    catch (Exception ex)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"Error loading image from {path}: {ex.Message}");
-                    }
-                }
-            }
-
-            // Apply the image to BOTH dials
+            // Load dial image from embedded resources
+            var dialImage = LoadEmbeddedImage("knob.png");
             if (dialImage != null)
             {
                 // Create separate copies for each dial to avoid disposal issues
                 dialCollection.DialBackgroundImage = new Bitmap(dialImage);
                 dialYear.DialBackgroundImage = new Bitmap(dialImage);
-
-                // Dispose the original to prevent memory leaks
                 dialImage.Dispose();
             }
 
-            // Load cassette image
-            string[] cassettePaths = {
-                Path.Combine(Application.StartupPath, "Images", "cassette.png"),
-                Path.Combine(Directory.GetCurrentDirectory(), "Images", "cassette.png"),
-                Path.Combine(Directory.GetParent(Application.StartupPath)?.Parent?.Parent?.FullName ?? Application.StartupPath, "Images", "cassette.png")
-            };
-
-            bool cassetteLoaded = false;
-            foreach (var path in cassettePaths)
+            // Load cassette image from embedded resources
+            var cassetteImage = LoadEmbeddedImage("cassette.png");
+            if (cassetteImage != null)
             {
-                System.Diagnostics.Debug.WriteLine($"Trying cassette path: {path}");
-
-                if (File.Exists(path))
-                {
-                    try
-                    {
-                        spinningCassette.CassetteImage = Image.FromFile(path);
-                        System.Diagnostics.Debug.WriteLine($"SUCCESS! Cassette image loaded from: {path}");
-                        cassetteLoaded = true;
-                        break;
-                    }
-                    catch (Exception ex)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"Error loading cassette image from {path}: {ex.Message}");
-                    }
-                }
+                spinningCassette.CassetteImage = cassetteImage;
+                System.Diagnostics.Debug.WriteLine("Cassette image loaded from embedded resources");
             }
-
-            if (!cassetteLoaded)
+            else
             {
-                System.Diagnostics.Debug.WriteLine("Cassette image not found!");
+                System.Diagnostics.Debug.WriteLine("Cassette image not found in embedded resources!");
                 spinningCassette.Visible = false;
             }
 
-            // Load bottom board image
-            string[] bottomBoardPaths = {
-                Path.Combine(Application.StartupPath, "Images", "bottomboard.png"),
-                Path.Combine(Directory.GetCurrentDirectory(), "Images", "bottomboard.png"),
-                Path.Combine(Directory.GetParent(Application.StartupPath)?.Parent?.Parent?.FullName ?? Application.StartupPath, "Images", "bottomboard.png")
-            };
-
-            foreach (var path in bottomBoardPaths)
+            // Load bottom board image from embedded resources
+            var bottomBoardImage = LoadEmbeddedImage("bottomboard.png");
+            if (bottomBoardImage != null)
             {
-                if (File.Exists(path))
-                {
-                    try
-                    {
-                        picBottomBoard.Image = Image.FromFile(path);
-                        break;
-                    }
-                    catch
-                    {
-                        // Handle image loading failure
-                    }
-                }
+                picBottomBoard.Image = bottomBoardImage;
             }
         }
 
@@ -348,10 +308,15 @@ namespace MyMusicPlayer
             {
                 Console.WriteLine("No music library path set. Use Settings button to select a folder.");
                 // Display greeting when no music library is set
-                var greetingItem1 = new ListViewItem("GREETINGS PROFESSOR FALKEN,");
-                var greetingItem2 = new ListViewItem("SHALL WE PLAY SOME MUSIC?");
+                var greetingItem1 = new ListViewItem("   SHALL WE PLAY SOME MUSIC?");
+                var greetingItem2 = new ListViewItem("1. CLICK THE STAR");
+                var greetingItem3 = new ListViewItem("2. SELECT YOUR MUSIC LIBRARY");
+                var greetingItem4 = new ListViewItem("3. SELECT A SHOW OR ROLL DICE");
+
                 lstShows.Items.Add(greetingItem1);
                 lstShows.Items.Add(greetingItem2);
+                lstShows.Items.Add(greetingItem3);
+                lstShows.Items.Add(greetingItem4);
                 UpdateButtonStates();
                 return;
             }
@@ -376,8 +341,8 @@ namespace MyMusicPlayer
                 else
                 {
                     // No folders found, display greeting
-                    var greetingItem1 = new ListViewItem("GREETINGS PROFESSOR FALKEN,");
-                    var greetingItem2 = new ListViewItem("SHALL WE PLAY SOME MUSIC?");
+                    var greetingItem1 = new ListViewItem("I'M SORRY DAVE");
+                    var greetingItem2 = new ListViewItem("FOLDER NOT FOUND");
                     lstShows.Items.Add(greetingItem1);
                     lstShows.Items.Add(greetingItem2);
                 }
@@ -386,8 +351,8 @@ namespace MyMusicPlayer
             {
                 Console.WriteLine($"Music directory does not exist: {musicLibraryPath}");
                 // Display greeting when music directory doesn't exist
-                var greetingItem1 = new ListViewItem("GREETINGS PROFESSOR FALKEN,");
-                var greetingItem2 = new ListViewItem("SHALL WE PLAY SOME MUSIC?");
+                var greetingItem1 = new ListViewItem("I'M SORRY DAVE");
+                var greetingItem2 = new ListViewItem("FOLDER NOT FOUND");
                 lstShows.Items.Add(greetingItem1);
                 lstShows.Items.Add(greetingItem2);
             }
@@ -533,8 +498,8 @@ namespace MyMusicPlayer
             if (dialCollection.SelectedItem == null || dialYear.SelectedItem == null) 
             {
                 // Display greeting when no collection or year is selected
-                var greetingItem1 = new ListViewItem("GREETINGS PROFESSOR FALKEN,");
-                var greetingItem2 = new ListViewItem("SHALL WE PLAY SOME MUSIC?");
+                var greetingItem1 = new ListViewItem("I'M SORRY DAVE,");
+                var greetingItem2 = new ListViewItem("NO BAND OR YEAR SELECTED");
                 lstShows.Items.Add(greetingItem1);
                 lstShows.Items.Add(greetingItem2);
                 UpdateButtonStates();
@@ -552,8 +517,8 @@ namespace MyMusicPlayer
                 if (mp3Files.Length == 0)
                 {
                     // Display greeting when folder exists but has no MP3 files
-                    var greetingItem1 = new ListViewItem("GREETINGS PROFESSOR FALKEN,");
-                    var greetingItem2 = new ListViewItem("SHALL WE PLAY SOME MUSIC?");
+                    var greetingItem1 = new ListViewItem("I'M SORRY DAVE,");
+                    var greetingItem2 = new ListViewItem("NO MP3 FILES FOUND");
                     lstShows.Items.Add(greetingItem1);
                     lstShows.Items.Add(greetingItem2);
                 }
@@ -573,8 +538,8 @@ namespace MyMusicPlayer
             else
             {
                 // Display greeting when folder doesn't exist
-                var greetingItem1 = new ListViewItem("GREETINGS PROFESSOR FALKEN,");
-                var greetingItem2 = new ListViewItem("SHALL WE PLAY SOME MUSIC?");
+                var greetingItem1 = new ListViewItem("I'M SORRY DAVE,");
+                var greetingItem2 = new ListViewItem("FOLDER NOT FOUND");
                 lstShows.Items.Add(greetingItem1);
                 lstShows.Items.Add(greetingItem2);
             }
@@ -589,8 +554,14 @@ namespace MyMusicPlayer
                 string selectedItem = lstShows.SelectedItems[0].Text ?? "";
                 
                 // Prevent double-click on greeting messages
-                if (selectedItem == "GREETINGS PROFESSOR FALKEN," || 
-                    selectedItem == "SHALL WE PLAY SOME MUSIC?")
+                if (selectedItem == "   SHALL WE PLAY SOME MUSIC?" || 
+                    selectedItem == "1. CLICK THE STAR," ||
+                    selectedItem == "2. SELECT YOUR MUSIC LIBRARY," ||  
+                    selectedItem == "3. SELECT A SHOW OR ROLL DICE," ||
+                    selectedItem == "I'M SORRY DAVE," ||
+                    selectedItem == "NO BAND OR YEAR SELECTED" ||
+                    selectedItem == "NO MP3 FILES FOUND" ||
+                    selectedItem == "FOLDER NOT FOUND") 
                 {
                     return; // Do nothing for greeting messages
                 }

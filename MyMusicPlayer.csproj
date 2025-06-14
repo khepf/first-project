@@ -13,21 +13,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="Images\knob.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Images\background.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Images\bottomboard.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Images\cassette.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Images\screen.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
+    <!-- Change from Content to EmbeddedResource -->
+    <EmbeddedResource Include="Images\knob.png" />
+    <EmbeddedResource Include="Images\background.png" />
+    <EmbeddedResource Include="Images\bottomboard.png" />
+    <EmbeddedResource Include="Images\cassette.png" />
+    <EmbeddedResource Include="Images\screen.png" />
   </ItemGroup>
 
 </Project>

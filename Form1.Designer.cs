@@ -76,11 +76,12 @@ partial class Form1
         this.spinningCassette = new SpinningCassette();
 
             // Settings button - top right corner
-        this.btnSettings.Text = "⚙";
+        this.btnSettings.Text = "⭐";
         this.btnSettings.Location = new System.Drawing.Point(750, 10);
         this.btnSettings.Size = new System.Drawing.Size(40, 40);
-        this.btnSettings.Font = new Font("Segoe UI Symbol", 16, FontStyle.Bold);
+        this.btnSettings.Font = new Font("Segoe UI Emoji", 16F, FontStyle.Regular);
         this.btnSettings.Click += new System.EventHandler(this.BtnSettings_Click);
+        this.btnSettings.UseVisualStyleBackColor = true;
 
         // TV Screen image
         this.picScreen.Size = new System.Drawing.Size(650, 220);
@@ -210,75 +211,31 @@ partial class Form1
     
     private void SetBackgroundImage()
     {
-        bool imageLoaded = false;
-        
-        string[] imagePaths = {
-            Path.Combine(Application.StartupPath, "Images", "background.png"),
-            Path.Combine(Directory.GetCurrentDirectory(), "Images", "background.png"),
-            Path.Combine(Directory.GetParent(Application.StartupPath)?.Parent?.Parent?.FullName ?? Application.StartupPath, "Images", "background.png")
-        };
-
-        foreach (var path in imagePaths)
+        var backgroundImage = LoadEmbeddedImage("background.png");
+        if (backgroundImage != null)
         {
-            System.Diagnostics.Debug.WriteLine($"Trying background path: {path}");
-            
-            if (File.Exists(path))
-            {
-                try
-                {
-                    this.BackgroundImage = Image.FromFile(path);
-                    this.BackgroundImageLayout = ImageLayout.Stretch;
-                    System.Diagnostics.Debug.WriteLine($"SUCCESS! Background image loaded from: {path}");
-                    imageLoaded = true;
-                    break;
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"Error loading background image from {path}: {ex.Message}");
-                }
-            }
+            this.BackgroundImage = backgroundImage;
+            this.BackgroundImageLayout = ImageLayout.Stretch;
+            System.Diagnostics.Debug.WriteLine("Background image loaded from embedded resources");
         }
-        
-        if (!imageLoaded)
+        else
         {
-            System.Diagnostics.Debug.WriteLine("Background image not found!");
+            System.Diagnostics.Debug.WriteLine("Background image not found in embedded resources!");
             this.BackColor = Color.Black;
         }
     }
 
     private void LoadScreenImage()
     {
-        bool screenLoaded = false;
-        
-        string[] screenPaths = {
-            Path.Combine(Application.StartupPath, "Images", "screen.png"),
-            Path.Combine(Directory.GetCurrentDirectory(), "Images", "screen.png"),
-            Path.Combine(Directory.GetParent(Application.StartupPath)?.Parent?.Parent?.FullName ?? Application.StartupPath, "Images", "screen.png")
-        };
-
-        foreach (var path in screenPaths)
+        var screenImage = LoadEmbeddedImage("screen.png");
+        if (screenImage != null)
         {
-            System.Diagnostics.Debug.WriteLine($"Trying screen path: {path}");
-            
-            if (File.Exists(path))
-            {
-                try
-                {
-                    this.picScreen.Image = Image.FromFile(path);
-                    System.Diagnostics.Debug.WriteLine($"SUCCESS! Screen image loaded from: {path}");
-                    screenLoaded = true;
-                    break;
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"Error loading screen image from {path}: {ex.Message}");
-                }
-            }
+            this.picScreen.Image = screenImage;
+            System.Diagnostics.Debug.WriteLine("Screen image loaded from embedded resources");
         }
-        
-        if (!screenLoaded)
+        else
         {
-            System.Diagnostics.Debug.WriteLine("Screen image not found!");
+            System.Diagnostics.Debug.WriteLine("Screen image not found in embedded resources!");
             this.picScreen.Visible = false;
         }
     }
