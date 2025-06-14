@@ -79,6 +79,7 @@ partial class Form1
         this.btnSettings.Text = "⭐";
         this.btnSettings.Location = new System.Drawing.Point(750, 10);
         this.btnSettings.Size = new System.Drawing.Size(40, 40);
+        this.btnSettings.BorderRadius = 8;
         this.btnSettings.Font = new Font("Segoe UI Emoji", 16F, FontStyle.Regular);
         this.btnSettings.Click += new System.EventHandler(this.BtnSettings_Click);
         this.btnSettings.UseVisualStyleBackColor = true;

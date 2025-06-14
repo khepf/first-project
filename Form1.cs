@@ -395,11 +395,6 @@ namespace MyMusicPlayer
                         
                         // Reload the entire interface with the new path
                         LoadMainFolders();
-                        
-                        MessageBox.Show($"Music library path updated to:\n{musicLibraryPath}", 
-                                    "Settings Updated", 
-                                    MessageBoxButtons.OK, 
-                                    MessageBoxIcon.Information);
                     }
                     else
                     {
