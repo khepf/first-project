@@ -34,6 +34,9 @@ namespace MyMusicPlayer
                 trackVolume.Value = (int)(currentVolume * 100);
             }
             UpdateSpeakerIcon(); // Initialize speaker icon
+
+            // Style the volume label to match time displays
+            StyleVolumeLabel();
         }
         
         private Image? LoadEmbeddedImage(string imageName)
@@ -62,6 +65,69 @@ namespace MyMusicPlayer
         {
             return string.Empty;
         }
+        
+        private void StyleVolumeLabel()
+        {
+            if (lblVolume != null)
+            {
+                // Apply the same styling as DigitalTimeLabel controls
+                lblVolume.BackColor = Color.Transparent; // Make transparent so we can draw custom background
+                lblVolume.ForeColor = ColorTranslator.FromHtml("#D2691E"); // Orange color like time displays
+                lblVolume.BorderStyle = BorderStyle.None; // Remove default border
+                lblVolume.FlatStyle = FlatStyle.Flat;
+                lblVolume.TextAlign = ContentAlignment.MiddleCenter; // Ensure perfect centering
+                lblVolume.AutoSize = false; // Prevent auto-sizing
+                
+                // Remove padding to ensure perfect centering
+                lblVolume.Padding = new Padding(0);
+                
+                // Ensure the label maintains its fixed size
+                lblVolume.Size = new Size(30, 30);
+
+                // Add custom paint event for rounded border
+                lblVolume.Paint += LblVolume_Paint;
+            }
+        }
+
+        // Add this method to handle custom painting of the volume label
+        private void LblVolume_Paint(object? sender, PaintEventArgs e)
+        {
+            if (sender is Label label)
+            {
+                Graphics g = e.Graphics;
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+
+                // Create rounded rectangle for background and border
+                Rectangle rect = new Rectangle(0, 0, label.Width - 1, label.Height - 1);
+                int cornerRadius = 4; // Same corner radius as DigitalTimeLabel
+
+                using (GraphicsPath path = CreateRoundedRectangle(rect, cornerRadius))
+                {
+                    // Fill background
+                    using (SolidBrush backgroundBrush = new SolidBrush(Color.Black))
+                    {
+                        g.FillPath(backgroundBrush, path);
+                    }
+
+                    // Draw border
+                    using (Pen borderPen = new Pen(Color.Gray, 1))
+                    {
+                        g.DrawPath(borderPen, path);
+                    }
+                }
+
+                // Draw the text/icon manually since we're custom painting
+                using (SolidBrush textBrush = new SolidBrush(label.ForeColor))
+                {
+                    StringFormat sf = new StringFormat();
+                    sf.Alignment = StringAlignment.Center;
+                    sf.LineAlignment = StringAlignment.Center;
+
+                    g.DrawString(label.Text, label.Font, textBrush, 
+                        new RectangleF(0, 0, label.Width, label.Height), sf);
+                }
+            }
+        }
 
        private void TrackVolume_ValueChanged(object? sender, EventArgs e)
         {
@@ -74,16 +140,16 @@ namespace MyMusicPlayer
                 }
 
                 currentVolume = volumeBar.Value / 100.0f;
-                
+
                 // Update speaker icon based on mute state and volume level
                 UpdateSpeakerIcon();
-                
+
                 // Apply volume to current audio output (only if not muted)
                 if (outputDevice != null)
                 {
                     outputDevice.Volume = isMuted ? 0.0f : currentVolume;
                 }
-                
+
                 System.Diagnostics.Debug.WriteLine($"Volume changed to: {volumeBar.Value}% (Muted: {isMuted})");
             }
         }

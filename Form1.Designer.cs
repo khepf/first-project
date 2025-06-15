@@ -194,17 +194,20 @@ partial class Form1
 
         // Volume label - coordinates relative to picBottomBoard
         this.lblVolume.Text = "🔊"; // Speaker icon
-        this.lblVolume.Location = new System.Drawing.Point(174, 148); // Positioned to the left of volume bar
+        this.lblVolume.Location = new System.Drawing.Point(168, 146); // Positioned to the left of volume bar
         this.lblVolume.Size = new System.Drawing.Size(30, 30);
-        this.lblVolume.Font = new Font("Segoe UI Emoji", 16, FontStyle.Regular);
-        this.lblVolume.ForeColor = ColorTranslator.FromHtml("#D2691E");
-        this.lblVolume.BackColor = Color.Transparent;
-        this.lblVolume.TextAlign = ContentAlignment.MiddleCenter;
+        this.lblVolume.Font = new Font("Segoe UI Emoji", 14, FontStyle.Regular); // Slightly smaller font
+        this.lblVolume.ForeColor = ColorTranslator.FromHtml("#D2691E"); // Orange text like time displays
+        this.lblVolume.BackColor = Color.Transparent; // Transparent for custom painting
+        this.lblVolume.TextAlign = ContentAlignment.MiddleCenter; // This ensures centering
         this.lblVolume.Cursor = Cursors.Hand; // Show hand cursor to indicate it's clickable
+        this.lblVolume.BorderStyle = BorderStyle.None; // No default border
+        this.lblVolume.FlatStyle = FlatStyle.Flat; // Flat style for consistent appearance
+        this.lblVolume.AutoSize = false; // Prevent auto-sizing which can affect centering
         this.lblVolume.Click += new System.EventHandler(this.LblVolume_Click);
 
         // Volume bar - coordinates relative to picBottomBoard
-        this.trackVolume.Location = new System.Drawing.Point(200, 150); // Position after speaker icon
+        this.trackVolume.Location = new System.Drawing.Point(200, 148); // Position after speaker icon
         this.trackVolume.Size = new System.Drawing.Size(400, 30); // Smaller than progress bar
         this.trackVolume.Minimum = 0;
         this.trackVolume.Maximum = 100;
