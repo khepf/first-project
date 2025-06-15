@@ -193,23 +193,24 @@ partial class Form1
         this.btnRandom.Click += new System.EventHandler(this.BtnRandom_Click);
 
         // Volume label - coordinates relative to picBottomBoard
-        this.lblVolume.Text = "VOL: 70%";
-        this.lblVolume.Location = new System.Drawing.Point(80, 158); // Left of volume bar
-        this.lblVolume.Size = new System.Drawing.Size(80, 20);
-        this.lblVolume.Font = new Font("Consolas", 10, FontStyle.Bold);
+        this.lblVolume.Text = "🔊"; // Speaker icon
+        this.lblVolume.Location = new System.Drawing.Point(174, 148); // Positioned to the left of volume bar
+        this.lblVolume.Size = new System.Drawing.Size(30, 30);
+        this.lblVolume.Font = new Font("Segoe UI Emoji", 16, FontStyle.Regular);
         this.lblVolume.ForeColor = ColorTranslator.FromHtml("#D2691E");
         this.lblVolume.BackColor = Color.Transparent;
-        this.lblVolume.TextAlign = ContentAlignment.MiddleLeft;
+        this.lblVolume.TextAlign = ContentAlignment.MiddleCenter;
+        this.lblVolume.Cursor = Cursors.Hand; // Show hand cursor to indicate it's clickable
+        this.lblVolume.Click += new System.EventHandler(this.LblVolume_Click);
 
         // Volume bar - coordinates relative to picBottomBoard
-        this.trackVolume.Location = new System.Drawing.Point(200, 150); // Position below other controls
+        this.trackVolume.Location = new System.Drawing.Point(200, 150); // Position after speaker icon
         this.trackVolume.Size = new System.Drawing.Size(400, 30); // Smaller than progress bar
         this.trackVolume.Minimum = 0;
         this.trackVolume.Maximum = 100;
         this.trackVolume.Value = 70; // Default volume at 70%
         this.trackVolume.TabStop = false;
         this.trackVolume.ValueChanged += new System.EventHandler(this.TrackVolume_ValueChanged);
-
         // Add all controls to the form
         this.Controls.Add(this.picBottomBoard); // Add parent first
         

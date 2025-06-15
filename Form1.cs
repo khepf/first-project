@@ -9,6 +9,8 @@ namespace MyMusicPlayer
         private WaveOutEvent? outputDevice;
         private AudioFileReader? audioFile;
         private float currentVolume = 0.7f; // Default volume at 70%
+        private float volumeBeforeMute = 0.7f; // Store volume before muting
+        private bool isMuted = false; // Track mute state
         private bool isPaused = false;
         private System.Windows.Forms.Timer? progressTimer;
         private bool isUserDragging = false;
@@ -26,11 +28,12 @@ namespace MyMusicPlayer
             LoadMainFolders();
             UpdateButtonStates();
 
-                    // Set initial volume
+            // Set initial volume and update speaker icon
             if (trackVolume != null)
             {
                 trackVolume.Value = (int)(currentVolume * 100);
             }
+            UpdateSpeakerIcon(); // Initialize speaker icon
         }
         
         private Image? LoadEmbeddedImage(string imageName)
@@ -60,25 +63,66 @@ namespace MyMusicPlayer
             return string.Empty;
         }
 
-        private void TrackVolume_ValueChanged(object? sender, EventArgs e)
+       private void TrackVolume_ValueChanged(object? sender, EventArgs e)
         {
             if (sender is TrackBar volumeBar)
             {
+                // If user manually changes volume, unmute automatically
+                if (isMuted && volumeBar.Value > 0)
+                {
+                    isMuted = false;
+                }
+
                 currentVolume = volumeBar.Value / 100.0f;
                 
-                // Update volume label
-                if (lblVolume != null)
-                {
-                    lblVolume.Text = $"VOL: {volumeBar.Value}%";
-                }
+                // Update speaker icon based on mute state and volume level
+                UpdateSpeakerIcon();
                 
-                // Apply volume to current audio output
+                // Apply volume to current audio output (only if not muted)
                 if (outputDevice != null)
                 {
-                    outputDevice.Volume = currentVolume;
+                    outputDevice.Volume = isMuted ? 0.0f : currentVolume;
                 }
                 
-                System.Diagnostics.Debug.WriteLine($"Volume changed to: {volumeBar.Value}%");
+                System.Diagnostics.Debug.WriteLine($"Volume changed to: {volumeBar.Value}% (Muted: {isMuted})");
+            }
+        }
+
+                private void LblVolume_Click(object? sender, EventArgs e)
+        {
+            ToggleMute();
+        }
+
+        // Add this new method to update the speaker icon
+        private void UpdateSpeakerIcon()
+        {
+            if (lblVolume != null)
+            {
+                if (isMuted)
+                {
+                    lblVolume.Text = "🔇"; // Muted speaker icon
+                }
+                else
+                {
+                    // Use different speaker icons based on volume level
+                    int volumePercent = trackVolume?.Value ?? 70;
+                    if (volumePercent == 0)
+                    {
+                        lblVolume.Text = "🔇"; // Muted/no volume
+                    }
+                    else if (volumePercent <= 33)
+                    {
+                        lblVolume.Text = "🔈"; // Low volume
+                    }
+                    else if (volumePercent <= 66)
+                    {
+                        lblVolume.Text = "🔉"; // Medium volume
+                    }
+                    else
+                    {
+                        lblVolume.Text = "🔊"; // High volume
+                    }
+                }
             }
         }
 
@@ -436,7 +480,7 @@ namespace MyMusicPlayer
             }
         }
 
-        private void UpdateButtonStates()
+         private void UpdateButtonStates()
         {
             bool hasSelectedItem = lstShows.SelectedItems.Count > 0;
             bool hasLoadedFile = !string.IsNullOrEmpty(currentShowPath) && File.Exists(currentShowPath);
@@ -464,6 +508,9 @@ namespace MyMusicPlayer
             {
                 btnPlay.Text = "▶";  // Show play icon when stopped or paused
             }
+
+            // Update speaker icon based on current mute state and volume
+            UpdateSpeakerIcon();
         }
 
         private void DialCollection_SelectedIndexChanged(object? sender, EventArgs e)
@@ -646,7 +693,8 @@ namespace MyMusicPlayer
             }
 
             outputDevice.Init(audioFile);
-            outputDevice.Volume = currentVolume; // Set the volume
+            // Apply current volume considering mute state
+            outputDevice.Volume = isMuted ? 0.0f : currentVolume;
             outputDevice.Play();
             isPaused = false;
             btnPlay.Text = "⏸";
@@ -674,6 +722,50 @@ namespace MyMusicPlayer
             // Highlight the currently playing show in the list
             HighlightCurrentShow(filePath);
             UpdateButtonStates();
+        }
+
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            // Handle M key for mute/unmute
+            if (keyData == Keys.M)
+            {
+                ToggleMute();
+                return true;
+            }
+
+            return base.ProcessCmdKey(ref msg, keyData);
+        }
+
+        private void ToggleMute()
+        {
+            if (isMuted)
+            {
+                // Unmute: restore previous volume
+                isMuted = false;
+                currentVolume = volumeBeforeMute;
+                
+                if (trackVolume != null)
+                {
+                    trackVolume.Value = (int)(currentVolume * 100);
+                }
+            }
+            else
+            {
+                // Mute: store current volume and set to 0
+                volumeBeforeMute = currentVolume;
+                isMuted = true;
+            }
+
+            // Apply the volume change to the output device
+            if (outputDevice != null)
+            {
+                outputDevice.Volume = isMuted ? 0.0f : currentVolume;
+            }
+
+            // Update the speaker icon
+            UpdateSpeakerIcon();
+            
+            System.Diagnostics.Debug.WriteLine($"Mute toggled: {(isMuted ? "MUTED" : "UNMUTED")} - Volume: {(int)(currentVolume * 100)}%");
         }
 
         private void HighlightCurrentShow(string showPath)
