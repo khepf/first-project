@@ -8,6 +8,7 @@ namespace MyMusicPlayer
         private string musicLibraryPath = GetMusicLibraryPath();
         private WaveOutEvent? outputDevice;
         private AudioFileReader? audioFile;
+        private float currentVolume = 0.7f; // Default volume at 70%
         private bool isPaused = false;
         private System.Windows.Forms.Timer? progressTimer;
         private bool isUserDragging = false;
@@ -24,6 +25,12 @@ namespace MyMusicPlayer
             LoadImages();
             LoadMainFolders();
             UpdateButtonStates();
+
+                    // Set initial volume
+            if (trackVolume != null)
+            {
+                trackVolume.Value = (int)(currentVolume * 100);
+            }
         }
         
         private Image? LoadEmbeddedImage(string imageName)
@@ -51,6 +58,28 @@ namespace MyMusicPlayer
         private static string GetMusicLibraryPath()
         {
             return string.Empty;
+        }
+
+        private void TrackVolume_ValueChanged(object? sender, EventArgs e)
+        {
+            if (sender is TrackBar volumeBar)
+            {
+                currentVolume = volumeBar.Value / 100.0f;
+                
+                // Update volume label
+                if (lblVolume != null)
+                {
+                    lblVolume.Text = $"VOL: {volumeBar.Value}%";
+                }
+                
+                // Apply volume to current audio output
+                if (outputDevice != null)
+                {
+                    outputDevice.Volume = currentVolume;
+                }
+                
+                System.Diagnostics.Debug.WriteLine($"Volume changed to: {volumeBar.Value}%");
+            }
         }
 
         private List<string> GetAllMp3Files(string rootPath)
@@ -617,6 +646,7 @@ namespace MyMusicPlayer
             }
 
             outputDevice.Init(audioFile);
+            outputDevice.Volume = currentVolume; // Set the volume
             outputDevice.Play();
             isPaused = false;
             btnPlay.Text = "⏸";

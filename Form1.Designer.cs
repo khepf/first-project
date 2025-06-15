@@ -6,6 +6,8 @@ partial class Form1
     ///  Required designer variable.
     /// </summary>
     private System.ComponentModel.IContainer components = null;
+    private System.Windows.Forms.Label lblVolume;
+    private TrackBar trackVolume;
     private ActionButton btnSettings;
     private ActionButton btnPlay;
     private ActionButton btnStop;
@@ -59,6 +61,8 @@ partial class Form1
         this.Location = new System.Drawing.Point(1920, 200);
 
         // Initialize Material UI Components
+        this.lblVolume = new System.Windows.Forms.Label();
+        this.trackVolume = new TrackBar();
         this.btnSettings = new ActionButton();
         this.btnPlay = new ActionButton();
         this.btnStop = new ActionButton();
@@ -75,7 +79,7 @@ partial class Form1
         this.picScreen = new System.Windows.Forms.PictureBox();
         this.spinningCassette = new SpinningCassette();
 
-            // Settings button - top right corner
+        // Settings button - top right corner
         this.btnSettings.Text = "⭐";
         this.btnSettings.Location = new System.Drawing.Point(750, 10);
         this.btnSettings.Size = new System.Drawing.Size(40, 40);
@@ -188,7 +192,25 @@ partial class Form1
         this.btnRandom.Font = new Font("Segoe UI Symbol", 24, FontStyle.Bold);
         this.btnRandom.Click += new System.EventHandler(this.BtnRandom_Click);
 
-        // Add all controls to the form - ORDER MATTERS!
+        // Volume label - coordinates relative to picBottomBoard
+        this.lblVolume.Text = "VOL: 70%";
+        this.lblVolume.Location = new System.Drawing.Point(80, 158); // Left of volume bar
+        this.lblVolume.Size = new System.Drawing.Size(80, 20);
+        this.lblVolume.Font = new Font("Consolas", 10, FontStyle.Bold);
+        this.lblVolume.ForeColor = ColorTranslator.FromHtml("#D2691E");
+        this.lblVolume.BackColor = Color.Transparent;
+        this.lblVolume.TextAlign = ContentAlignment.MiddleLeft;
+
+        // Volume bar - coordinates relative to picBottomBoard
+        this.trackVolume.Location = new System.Drawing.Point(200, 150); // Position below other controls
+        this.trackVolume.Size = new System.Drawing.Size(400, 30); // Smaller than progress bar
+        this.trackVolume.Minimum = 0;
+        this.trackVolume.Maximum = 100;
+        this.trackVolume.Value = 70; // Default volume at 70%
+        this.trackVolume.TabStop = false;
+        this.trackVolume.ValueChanged += new System.EventHandler(this.TrackVolume_ValueChanged);
+
+        // Add all controls to the form
         this.Controls.Add(this.picBottomBoard); // Add parent first
         
         // Add all bottom board controls as children of picBottomBoard
@@ -198,6 +220,8 @@ partial class Form1
         this.picBottomBoard.Controls.Add(this.btnPlay);
         this.picBottomBoard.Controls.Add(this.btnStop);
         this.picBottomBoard.Controls.Add(this.btnRandom);
+        this.picBottomBoard.Controls.Add(this.trackVolume);
+        this.picBottomBoard.Controls.Add(this.lblVolume);
 
         // Add remaining controls directly to the form
         this.Controls.Add(this.btnSettings);
