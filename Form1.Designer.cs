@@ -266,12 +266,11 @@ partial class Form1
             this.picScreen.Visible = false;
         }
     }    private void SetApplicationIcon()
-    {
-        try
+    {        try
         {
             // Try to load icon from embedded resources first
             var assembly = System.Reflection.Assembly.GetExecutingAssembly();
-            var resourceName = $"{assembly.GetName().Name}.Images.icon.ico";
+            var resourceName = $"{assembly.GetName().Name}.Images.icon1.ico";
             
             using (var stream = assembly.GetManifestResourceStream(resourceName))
             {
@@ -284,7 +283,7 @@ partial class Form1
             }
             
             // Fallback: try to load from Images folder
-            string iconPath = Path.Combine(Application.StartupPath, "Images", "icon.ico");
+            string iconPath = Path.Combine(Application.StartupPath, "Images", "icon1.ico");
             if (File.Exists(iconPath))
             {
                 this.Icon = new Icon(iconPath);
