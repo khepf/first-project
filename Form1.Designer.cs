@@ -40,8 +40,7 @@ partial class Form1
     #region Windows Form Designer generated code
 
     /// <summary>
-    ///  Required method for Designer support - do not modify
-    ///  the contents of this method with the code editor.
+    ///  Required method for Designer support
     /// </summary>
     private void InitializeComponent()
     {
@@ -54,11 +53,12 @@ partial class Form1
         // Use FixedDialog to completely prevent resizing
         this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
         this.MaximizeBox = false;
-        this.MinimizeBox = true; // Keep minimize button
-
-        // Set the form to start at a specific position
+        this.MinimizeBox = true; // Keep minimize button        // Set the form to start at a specific position
         this.StartPosition = System.Windows.Forms.FormStartPosition.Manual;
         this.Location = new System.Drawing.Point(1920, 200);
+
+        // Set the application icon
+        this.SetApplicationIcon();
 
         // Initialize Material UI Components
         this.lblVolume = new System.Windows.Forms.Label();
@@ -252,9 +252,7 @@ partial class Form1
             System.Diagnostics.Debug.WriteLine("Background image not found in embedded resources!");
             this.BackColor = Color.Black;
         }
-    }
-
-    private void LoadScreenImage()
+    }    private void LoadScreenImage()
     {
         var screenImage = LoadEmbeddedImage("screen.png");
         if (screenImage != null)
@@ -266,6 +264,40 @@ partial class Form1
         {
             System.Diagnostics.Debug.WriteLine("Screen image not found in embedded resources!");
             this.picScreen.Visible = false;
+        }
+    }    private void SetApplicationIcon()
+    {
+        try
+        {
+            // Try to load icon from embedded resources first
+            var assembly = System.Reflection.Assembly.GetExecutingAssembly();
+            var resourceName = $"{assembly.GetName().Name}.Images.icon.ico";
+            
+            using (var stream = assembly.GetManifestResourceStream(resourceName))
+            {
+                if (stream != null)
+                {
+                    this.Icon = new Icon(stream);
+                    System.Diagnostics.Debug.WriteLine("Icon loaded from embedded resources");
+                    return;
+                }
+            }
+            
+            // Fallback: try to load from Images folder
+            string iconPath = Path.Combine(Application.StartupPath, "Images", "icon.ico");
+            if (File.Exists(iconPath))
+            {
+                this.Icon = new Icon(iconPath);
+                System.Diagnostics.Debug.WriteLine("Icon loaded from Images folder");
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine("Icon file not found");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error loading icon: {ex.Message}");
         }
     }
 
