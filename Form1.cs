@@ -1023,5 +1023,13 @@ namespace MyMusicPlayer
             }
         }
          
+        private void BtnHelp_Click(object? sender, EventArgs e)
+        {
+            // Create and show the help dialog
+            using (var helpDialog = new HelpDialog())
+            {
+                helpDialog.ShowDialog(this);
+            }
+        }
     }
 }

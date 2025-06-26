@@ -9,6 +9,7 @@ partial class Form1
     private System.Windows.Forms.Label lblVolume;
     private TrackBar trackVolume;
     private ActionButton btnSettings;
+    private ActionButton btnHelp;
     private ActionButton btnPlay;
     private ActionButton btnStop;
     private ActionButton btnRandom;
@@ -64,6 +65,7 @@ partial class Form1
         this.lblVolume = new System.Windows.Forms.Label();
         this.trackVolume = new TrackBar();
         this.btnSettings = new ActionButton();
+        this.btnHelp = new ActionButton();
         this.btnPlay = new ActionButton();
         this.btnStop = new ActionButton();
         this.btnRandom = new ActionButton();
@@ -87,6 +89,15 @@ partial class Form1
         this.btnSettings.Font = new Font("Segoe UI Emoji", 16F, FontStyle.Regular);
         this.btnSettings.Click += new System.EventHandler(this.BtnSettings_Click);
         this.btnSettings.UseVisualStyleBackColor = true;
+
+        // Help button - positioned below the settings button
+        this.btnHelp.Text = "❓";
+        this.btnHelp.Location = new System.Drawing.Point(750, 55);
+        this.btnHelp.Size = new System.Drawing.Size(40, 40);
+        this.btnHelp.BorderRadius = 8;
+        this.btnHelp.Font = new Font("Segoe UI Emoji", 16F, FontStyle.Regular);
+        this.btnHelp.Click += new System.EventHandler(this.BtnHelp_Click);
+        this.btnHelp.UseVisualStyleBackColor = true;
 
         // TV Screen image
         this.picScreen.Size = new System.Drawing.Size(650, 220);
@@ -229,6 +240,7 @@ partial class Form1
 
         // Add remaining controls directly to the form
         this.Controls.Add(this.btnSettings);
+        this.Controls.Add(this.btnHelp);
         this.Controls.Add(this.lstShows);
         this.Controls.Add(this.picScreen);
         this.Controls.Add(this.lblCurrentPath);
