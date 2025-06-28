@@ -63,6 +63,18 @@ namespace MyMusicPlayer
         }
         private static string GetMusicLibraryPath()
         {
+            // Look for a "Music" folder in the same directory as the executable
+            string executableDirectory = Path.GetDirectoryName(Application.ExecutablePath) ?? "";
+            string musicFolderPath = Path.Combine(executableDirectory, "Music");
+            
+            // Return the path if the Music folder exists, otherwise return empty string
+            if (Directory.Exists(musicFolderPath))
+            {
+                System.Diagnostics.Debug.WriteLine($"Found Music folder at: {musicFolderPath}");
+                return musicFolderPath;
+            }
+            
+            System.Diagnostics.Debug.WriteLine($"Music folder not found at: {musicFolderPath}");
             return string.Empty;
         }
         
