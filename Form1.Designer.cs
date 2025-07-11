@@ -54,9 +54,8 @@ partial class Form1
         // Use FixedDialog to completely prevent resizing
         this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
         this.MaximizeBox = false;
-        this.MinimizeBox = true; // Keep minimize button        // Set the form to start at a specific position
-        this.StartPosition = System.Windows.Forms.FormStartPosition.Manual;
-        this.Location = new System.Drawing.Point(1920, 200);
+        this.MinimizeBox = true; // Keep minimize button        // Set the form to start centered on the primary monitor
+        this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
 
         // Set the application icon
         this.SetApplicationIcon();
