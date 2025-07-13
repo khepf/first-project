@@ -24,19 +24,20 @@ namespace MyMusicPlayer
             SetupCustomListView();
             MaximizeBox = false;
             MinimizeBox = true;
-            LoadImages();
-            LoadMainFolders();
-            UpdateButtonStates();
-
-            // Set initial volume and update speaker icon
+            
+            // Initialize UI components first (fast operations)
             if (trackVolume != null)
             {
                 trackVolume.Value = (int)(currentVolume * 100);
             }
-            UpdateSpeakerIcon(); // Initialize speaker icon
-
-            // Style the volume label to match time displays
+            UpdateSpeakerIcon();
             StyleVolumeLabel();
+            
+            // Show loading message immediately
+            ShowLoadingMessage();
+            
+            // Defer heavy operations until after form is shown
+            this.Shown += Form1_Shown;
         }
         
         private Image? LoadEmbeddedImage(string imageName)
@@ -474,28 +475,40 @@ namespace MyMusicPlayer
 
             if (Directory.Exists(musicLibraryPath))
             {
-                var mf = Directory.GetDirectories(musicLibraryPath);
-                Console.WriteLine($"Found {mf.Length} main folders");
+                try
+                {
+                    // Use faster directory enumeration
+                    var directories = Directory.EnumerateDirectories(musicLibraryPath);
+                    
+                    foreach (var folder in directories)
+                    {
+                        string folderName = Path.GetFileName(folder);
+                        Console.WriteLine($"Adding folder: {folderName}");
+                        dialCollection.AddItem(folderName);
+                    }
 
-                foreach (var folder in mf)
-                {
-                    string folderName = Path.GetFileName(folder);
-                    Console.WriteLine($"Adding folder: {folderName}");
-                    dialCollection.AddItem(folderName);
+                    // Select the first folder if available
+                    if (dialCollection.Items.Count > 0)
+                    {
+                        dialCollection.SelectedIndex = 0;
+                    }
+                    else
+                    {
+                        // No folders found, display greeting
+                        var greetingItem1 = new ListViewItem("I'M SORRY DAVE");
+                        var greetingItem2 = new ListViewItem("FOLDER NOT FOUND");
+                        lstShows.Items.Add(greetingItem1);
+                        lstShows.Items.Add(greetingItem2);
+                    }
                 }
-
-                // Select the first folder if available
-                if (dialCollection.Items.Count > 0)
+                catch (Exception ex)
                 {
-                    dialCollection.SelectedIndex = 0;
-                }
-                else
-                {
-                    // No folders found, display greeting
-                    var greetingItem1 = new ListViewItem("I'M SORRY DAVE");
-                    var greetingItem2 = new ListViewItem("FOLDER NOT FOUND");
-                    lstShows.Items.Add(greetingItem1);
-                    lstShows.Items.Add(greetingItem2);
+                    // Handle errors gracefully
+                    Console.WriteLine($"Error loading folders: {ex.Message}");
+                    var errorItem1 = new ListViewItem("I'M SORRY DAVE");
+                    var errorItem2 = new ListViewItem("ERROR LOADING FOLDERS");
+                    lstShows.Items.Add(errorItem1);
+                    lstShows.Items.Add(errorItem2);
                 }
             }
             else
@@ -611,22 +624,29 @@ namespace MyMusicPlayer
 
             if (Directory.Exists(mainFolderPath))
             {
-                // Load year subfolders and sort them
-                var yearFolders = Directory.GetDirectories(mainFolderPath)
-                    .Select(dir => Path.GetFileName(dir))
-                    .Where(name => int.TryParse(name, out _)) // Only include folders that are numeric (years)
-                    .OrderBy(year => int.Parse(year))
-                    .ToList();
-
-                foreach (string year in yearFolders)
+                try
                 {
-                    dialYear.AddItem(year);
+                    // Use faster directory enumeration and streaming operations
+                    var yearFolders = Directory.EnumerateDirectories(mainFolderPath)
+                        .Select(dir => Path.GetFileName(dir))
+                        .Where(name => int.TryParse(name, out _)) // Only include folders that are numeric (years)
+                        .OrderBy(year => int.Parse(year))
+                        .ToList();
+
+                    foreach (string year in yearFolders)
+                    {
+                        dialYear.AddItem(year);
+                    }
+
+                    // Select the first year if available
+                    if (dialYear.Items.Count > 0)
+                    {
+                        dialYear.SelectedIndex = 0;
+                    }
                 }
-
-                // Select the first year if available
-                if (dialYear.Items.Count > 0)
+                catch (Exception ex)
                 {
-                    dialYear.SelectedIndex = 0;
+                    Console.WriteLine($"Error loading years: {ex.Message}");
                 }
             }
             UpdateButtonStates(); // Update after loading years
@@ -1042,6 +1062,36 @@ namespace MyMusicPlayer
             {
                 helpDialog.ShowDialog(this);
             }
+        }
+
+        private void ShowLoadingMessage()
+        {
+            // Show immediate loading message
+            lstShows.Items.Clear();
+            var loadingItem1 = new ListViewItem("⏳ LOADING MUSIC LIBRARY...");
+            var loadingItem2 = new ListViewItem("PLEASE WAIT...");
+            lstShows.Items.Add(loadingItem1);
+            lstShows.Items.Add(loadingItem2);
+        }
+        
+        private async void Form1_Shown(object? sender, EventArgs e)
+        {
+            // Perform heavy operations after UI is shown
+            await Task.Run(() =>
+            {
+                // Load images in background thread
+                LoadImagesAsync();
+            });
+            
+            // Update UI on main thread
+            LoadMainFolders();
+            UpdateButtonStates();
+        }
+        
+        private void LoadImagesAsync()
+        {
+            // Load images in background - invoke to UI thread when needed
+            this.Invoke(() => LoadImages());
         }
     }
 }
