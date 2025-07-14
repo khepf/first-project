@@ -4,7 +4,7 @@
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
-    <ApplicationIcon>Images\icon1.ico</ApplicationIcon>
+    <ApplicationIcon>Images\favicon.ico</ApplicationIcon>
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
     
     <!-- Version Information -->
@@ -31,7 +31,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Images\icon1.ico" />
+    <EmbeddedResource Include="Images\favicon.ico" />
     <EmbeddedResource Include="Images\knob.png" />
     <EmbeddedResource Include="Images\background.png" />
     <EmbeddedResource Include="Images\bottomboard.png" />

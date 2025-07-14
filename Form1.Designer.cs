@@ -281,8 +281,7 @@ partial class Form1
         {
             // Try to load icon from embedded resources first
             var assembly = System.Reflection.Assembly.GetExecutingAssembly();
-            var resourceName = $"{assembly.GetName().Name}.Images.icon1.ico";
-            
+            var resourceName = $"{assembly.GetName().Name}.Images.favicon.ico";
             using (var stream = assembly.GetManifestResourceStream(resourceName))
             {
                 if (stream != null)
@@ -294,7 +293,7 @@ partial class Form1
             }
             
             // Fallback: try to load from Images folder
-            string iconPath = Path.Combine(Application.StartupPath, "Images", "icon1.ico");
+            string iconPath = Path.Combine(Application.StartupPath, "Images", "favicon.ico");
             if (File.Exists(iconPath))
             {
                 this.Icon = new Icon(iconPath);
