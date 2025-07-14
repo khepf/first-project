@@ -8,9 +8,9 @@ namespace MyMusicPlayer
         private string musicLibraryPath = GetMusicLibraryPath();
         private WaveOutEvent? outputDevice;
         private AudioFileReader? audioFile;
-        private float currentVolume = 0.7f; // Default volume at 70%
-        private float volumeBeforeMute = 0.7f; // Store volume before muting
-        private bool isMuted = false; // Track mute state
+        private float currentVolume = 0.7f;
+        private float volumeBeforeMute = 0.7f;
+        private bool isMuted = false;
         private bool isPaused = false;
         private System.Windows.Forms.Timer? progressTimer;
         private bool isUserDragging = false;
@@ -102,7 +102,6 @@ namespace MyMusicPlayer
             }
         }
 
-        // Add this method to handle custom painting of the volume label
         private void LblVolume_Paint(object? sender, PaintEventArgs e)
         {
             if (sender is Label label)
@@ -142,7 +141,7 @@ namespace MyMusicPlayer
             }
         }
 
-       private void TrackVolume_ValueChanged(object? sender, EventArgs e)
+        private void TrackVolume_ValueChanged(object? sender, EventArgs e)
         {
             if (sender is TrackBar volumeBar)
             {
@@ -167,12 +166,11 @@ namespace MyMusicPlayer
             }
         }
 
-                private void LblVolume_Click(object? sender, EventArgs e)
+        private void LblVolume_Click(object? sender, EventArgs e)
         {
             ToggleMute();
         }
 
-        // Add this new method to update the speaker icon
         private void UpdateSpeakerIcon()
         {
             if (lblVolume != null)
@@ -571,7 +569,7 @@ namespace MyMusicPlayer
             }
         }
 
-         private void UpdateButtonStates()
+        private void UpdateButtonStates()
         {
             bool hasSelectedItem = lstShows.SelectedItems.Count > 0;
             bool hasLoadedFile = !string.IsNullOrEmpty(currentShowPath) && File.Exists(currentShowPath);

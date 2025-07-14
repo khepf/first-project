@@ -51,16 +51,14 @@ partial class Form1
 
         this.SetBackgroundImage();
 
-        // Use FixedDialog to completely prevent resizing
         this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
         this.MaximizeBox = false;
-        this.MinimizeBox = true; // Keep minimize button        // Set the form to start centered on the primary monitor
+        this.MinimizeBox = true;
         this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
 
         // Set the application icon
         this.SetApplicationIcon();
 
-        // Initialize Material UI Components
         this.lblVolume = new System.Windows.Forms.Label();
         this.trackVolume = new TrackBar();
         this.btnSettings = new ActionButton();
@@ -263,7 +261,8 @@ partial class Form1
             System.Diagnostics.Debug.WriteLine("Background image not found in embedded resources!");
             this.BackColor = Color.Black;
         }
-    }    private void LoadScreenImage()
+    }
+    private void LoadScreenImage()
     {
         var screenImage = LoadEmbeddedImage("screen.png");
         if (screenImage != null)
@@ -276,8 +275,10 @@ partial class Form1
             System.Diagnostics.Debug.WriteLine("Screen image not found in embedded resources!");
             this.picScreen.Visible = false;
         }
-    }    private void SetApplicationIcon()
-    {        try
+    }
+    private void SetApplicationIcon()
+    {
+        try
         {
             // Try to load icon from embedded resources first
             var assembly = System.Reflection.Assembly.GetExecutingAssembly();
@@ -291,7 +292,7 @@ partial class Form1
                     return;
                 }
             }
-            
+
             // Fallback: try to load from Images folder
             string iconPath = Path.Combine(Application.StartupPath, "Images", "favicon.ico");
             if (File.Exists(iconPath))
