@@ -1,5 +1,6 @@
 using NAudio.Wave;
 using System.Drawing.Drawing2D;
+using System.Linq;
 
 namespace MyMusicPlayer
 {
@@ -203,26 +204,27 @@ namespace MyMusicPlayer
             }
         }
 
-        private List<string> GetAllMp3Files(string rootPath)
+        private List<string> GetAllAudioFiles(string rootPath)
         {
-            List<string> mp3Files = new List<string>();
+            List<string> audioFiles = new List<string>();
 
             try
             {
                 if (!Directory.Exists(rootPath))
-                    return mp3Files;
+                    return audioFiles;
 
-                // Recursively search all subdirectories for MP3 files
-                mp3Files.AddRange(Directory.GetFiles(rootPath, "*.mp3", SearchOption.AllDirectories));
+                // Recursively search all subdirectories for supported audio files
+                audioFiles.AddRange(Directory.GetFiles(rootPath, "*.mp3", SearchOption.AllDirectories));
+                audioFiles.AddRange(Directory.GetFiles(rootPath, "*.flac", SearchOption.AllDirectories));
 
-                System.Diagnostics.Debug.WriteLine($"Found {mp3Files.Count} MP3 files total");
+                System.Diagnostics.Debug.WriteLine($"Found {audioFiles.Count} audio files total");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error scanning for MP3 files: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Error scanning for audio files: {ex.Message}");
             }
 
-            return mp3Files;
+            return audioFiles;
         }
 
         private void SetupCustomListView()
@@ -577,7 +579,7 @@ namespace MyMusicPlayer
             bool isPausedState = outputDevice?.PlaybackState == PlaybackState.Paused;
             bool hasMusicLibrary = !string.IsNullOrEmpty(musicLibraryPath) &&
                                 Directory.Exists(musicLibraryPath) &&
-                                GetAllMp3Files(musicLibraryPath).Count > 0;
+                                GetAllAudioFiles(musicLibraryPath).Count > 0;
 
             // Enable Play/Pause button if there's a selected item, loaded file, or something playing/paused
             btnPlay.Enabled = hasSelectedItem || hasLoadedFile || isPlaying || isPausedState;
@@ -679,25 +681,31 @@ namespace MyMusicPlayer
 
             if (Directory.Exists(currentFolderPath))
             {
-                var mp3Files = Directory.GetFiles(currentFolderPath, "*.mp3");
+                // Get both MP3 and FLAC files
+                var audioFiles = Directory.GetFiles(currentFolderPath, "*.mp3")
+                    .Concat(Directory.GetFiles(currentFolderPath, "*.flac"))
+                    .OrderBy(f => Path.GetFileNameWithoutExtension(f))
+                    .ToArray();
                 
-                if (mp3Files.Length == 0)
+                if (audioFiles.Length == 0)
                 {
-                    // Display greeting when folder exists but has no MP3 files
+                    // Display greeting when folder exists but has no audio files
                     var greetingItem1 = new ListViewItem("I'M SORRY DAVE,");
-                    var greetingItem2 = new ListViewItem("NO MP3 FILES FOUND");
+                    var greetingItem2 = new ListViewItem("NO AUDIO FILES FOUND");
                     lstShows.Items.Add(greetingItem1);
                     lstShows.Items.Add(greetingItem2);
                 }
                 else
                 {
-                    foreach (var mp3File in mp3Files)
+                    foreach (var audioFile in audioFiles)
                     {
-                        string showName = Path.GetFileNameWithoutExtension(mp3File);
+                        string showName = Path.GetFileNameWithoutExtension(audioFile);
+                        string extension = Path.GetExtension(audioFile).ToUpperInvariant().TrimStart('.');
                         string showItem = "🎵 " + showName;
 
                         // For MaterialListView, we need to create ListViewItems
                         var listItem = new ListViewItem(showItem);
+                        listItem.Tag = audioFile; // Store full path in Tag for easy access
                         lstShows.Items.Add(listItem);
                     }
                 }
@@ -736,15 +744,28 @@ namespace MyMusicPlayer
                 if (selectedItem.StartsWith("🎵 "))
                 {
                     string showName = selectedItem.Substring(2).Trim(); // Remove the emoji and trim whitespace
-                    string showPath = Path.Combine(currentFolderPath, showName + ".mp3"); // Construct the full file path
-
-                    if (File.Exists(showPath))
+                    
+                    // Try to find the file with either .mp3 or .flac extension
+                    string mp3Path = Path.Combine(currentFolderPath, showName + ".mp3");
+                    string flacPath = Path.Combine(currentFolderPath, showName + ".flac");
+                    
+                    string showPath = "";
+                    if (File.Exists(mp3Path))
+                    {
+                        showPath = mp3Path;
+                    }
+                    else if (File.Exists(flacPath))
+                    {
+                        showPath = flacPath;
+                    }
+                    
+                    if (!string.IsNullOrEmpty(showPath))
                     {
                         PlayShow(showPath); // Play the selected show
                     }
                     else
                     {
-                        MessageBox.Show($"The file '{showName}.mp3' could not be found in the folder '{currentFolderPath}'.",
+                        MessageBox.Show($"The audio file '{showName}' could not be found in the folder '{currentFolderPath}'.",
                                         "File Not Found", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     }
                 }
@@ -940,9 +961,22 @@ namespace MyMusicPlayer
                 if (selectedItem.StartsWith("🎵 "))
                 {
                     string showName = selectedItem.Substring(2).Trim();
-                    string showPath = Path.Combine(currentFolderPath, showName + ".mp3"); // Add .mp3 back
+                    
+                    // Try to find the file with either .mp3 or .flac extension
+                    string mp3Path = Path.Combine(currentFolderPath, showName + ".mp3");
+                    string flacPath = Path.Combine(currentFolderPath, showName + ".flac");
+                    
+                    string showPath = "";
+                    if (File.Exists(mp3Path))
+                    {
+                        showPath = mp3Path;
+                    }
+                    else if (File.Exists(flacPath))
+                    {
+                        showPath = flacPath;
+                    }
 
-                    if (File.Exists(showPath))
+                    if (!string.IsNullOrEmpty(showPath))
                     {
                         PlayShow(showPath);
                         btnPlay.Text = "⏸";  // Change to pause icon
@@ -1009,18 +1043,18 @@ namespace MyMusicPlayer
         {
             try
             {
-                // Get all MP3 files from the entire music library
-                List<string> allMp3Files = GetAllMp3Files(musicLibraryPath);
+                // Get all audio files from the entire music library
+                List<string> allAudioFiles = GetAllAudioFiles(musicLibraryPath);
 
-                if (allMp3Files.Count == 0)
+                if (allAudioFiles.Count == 0)
                 {
-                    MessageBox.Show("No MP3 files found in the music library!",
+                    MessageBox.Show("No audio files found in the music library!",
                                 "No Music Found", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     return;
                 }
 
                 // Pick a random file
-                string randomFile = allMp3Files[random.Next(allMp3Files.Count)];
+                string randomFile = allAudioFiles[random.Next(allAudioFiles.Count)];
 
                 // Update the dials and list to show the selected file's location
                 NavigateToFile(randomFile);
