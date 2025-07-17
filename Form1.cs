@@ -18,6 +18,7 @@ namespace MyMusicPlayer
         private string currentShowPath = "";
         private string currentFolderPath = "";
         private Random random = new Random();
+        private WaveformSampleProvider? waveformSampleProvider;
 
         public Form1()
         {
@@ -798,6 +799,7 @@ namespace MyMusicPlayer
             audioFile?.Dispose();
             progressTimer?.Stop();
             progressTimer?.Dispose();
+            waveformSampleProvider?.ClearWaveform();
 
             currentShowPath = filePath;
             outputDevice = new WaveOutEvent();
@@ -809,7 +811,10 @@ namespace MyMusicPlayer
                 audioFile.CurrentTime = startPosition.Value;
             }
 
-            outputDevice.Init(audioFile);
+            // Create waveform sample provider to capture audio data for visualization
+            waveformSampleProvider = new WaveformSampleProvider(audioFile, waveformDisplay);
+            
+            outputDevice.Init(waveformSampleProvider);
             // Apply current volume considering mute state
             outputDevice.Volume = isMuted ? 0.0f : currentVolume;
             outputDevice.Play();
@@ -993,6 +998,7 @@ namespace MyMusicPlayer
                 btnPlay.Text = "▶";  // Change to play icon
                 progressTimer?.Stop();
                 spinningCassette.IsSpinning = false;
+                waveformSampleProvider?.ClearWaveform(); // Clear waveform when paused
             }
             // If currently paused, resume it
             else if (outputDevice?.PlaybackState == PlaybackState.Paused)
@@ -1021,9 +1027,11 @@ namespace MyMusicPlayer
             audioFile?.Dispose();
             progressTimer?.Stop();
             progressTimer?.Dispose();
+            waveformSampleProvider?.ClearWaveform();
             outputDevice = null;
             audioFile = null;
             progressTimer = null;
+            waveformSampleProvider = null;
             isPaused = false;
             btnPlay.Text = "▶";  // Reset to play icon when stopped
             trackProgress.Value = 0;

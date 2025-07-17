@@ -24,6 +24,7 @@ partial class Form1
     private System.Windows.Forms.PictureBox picBottomBoard;
     private System.Windows.Forms.PictureBox picScreen;
     private SpinningCassette spinningCassette;
+    private WaveformDisplay waveformDisplay;
 
     /// <summary>
     ///  Clean up any resources being used.
@@ -77,6 +78,7 @@ partial class Form1
         this.picBottomBoard = new System.Windows.Forms.PictureBox();
         this.picScreen = new System.Windows.Forms.PictureBox();
         this.spinningCassette = new SpinningCassette();
+        this.waveformDisplay = new WaveformDisplay();
 
         // Settings button - top right corner
         this.btnSettings.Text = "⭐";
@@ -107,6 +109,10 @@ partial class Form1
         this.spinningCassette.Size = new System.Drawing.Size(340, 200);
         this.spinningCassette.Location = new System.Drawing.Point(232, 234);
         this.spinningCassette.BackColor = Color.Transparent;
+
+        // Waveform display - positioned between cassette wheels
+        this.waveformDisplay.Location = new System.Drawing.Point(132, 65); // Centered between wheels (125 to 211)
+        this.waveformDisplay.Size = new System.Drawing.Size(74, 48); // Slightly narrower to fit better
 
         // bottom wood board image
         this.picBottomBoard.Size = new System.Drawing.Size(800, 220);
@@ -234,6 +240,9 @@ partial class Form1
         this.picBottomBoard.Controls.Add(this.btnRandom);
         this.picBottomBoard.Controls.Add(this.trackVolume);
         this.picBottomBoard.Controls.Add(this.lblVolume);
+
+        // Add waveform display to the cassette (not bottom board)
+        this.spinningCassette.Controls.Add(this.waveformDisplay);
 
         // Add remaining controls directly to the form
         this.Controls.Add(this.btnSettings);
