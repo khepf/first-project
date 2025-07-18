@@ -38,7 +38,7 @@ namespace MyMusicPlayer
             this.ShowIcon = false;
 
             // Version label
-            this.lblVersion.Text = "Jerry Player Version 1.0.2";
+            this.lblVersion.Text = "Jerry Player Version 1.1.1";
             this.lblVersion.Font = new Font("Segoe UI", 16F, FontStyle.Bold);
             this.lblVersion.ForeColor = ColorTranslator.FromHtml("#D2691E");
             this.lblVersion.Location = new Point(20, 20);

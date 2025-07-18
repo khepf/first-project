@@ -213,4 +213,4 @@ Jerry Player is designed to give you a nostalgic, retro music listening experien
 
 ---
 
-*Jerry Player Version 1.0 - A retro music experience for the modern age*
+*Jerry Player Version 1.1.1 - A retro music experience for the modern age*

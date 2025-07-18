@@ -5,6 +5,14 @@ All notable changes to Jerry Player will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1]
+
+### Fixed
+- **Random play behavior**: Fixed inconsistent behavior between 3-level and 4-level folder structures
+  - 3-level structures (full show files): Random position within the show file
+  - 4-level structures (individual songs): Play full song from beginning
+  - Eliminated progress bar synchronization issues where bar showed random position but audio started from beginning
+
 ## [1.1.0]
 
 ### Added
@@ -16,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - ⬅️ "BACK TO SHOWS" navigation option when inside show folders
   - Visual distinction between folder view and song view
 - **Enhanced random play navigation**: Random button now properly drills down to show specific songs in 4-level structures
-- **Continuous playback**: Automatic advancement to the next song when current song ends
+- **Continuous playbook**: Automatic advancement to the next song when current song ends
   - Seamless transitions with no gaps between songs
   - Smart navigation that skips non-playable items (back buttons, separators, info items)
   - Works in both 3-level and 4-level folder structures

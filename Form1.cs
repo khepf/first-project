@@ -1475,13 +1475,29 @@ namespace MyMusicPlayer
                 // Update the dials and list to show the selected file's location
                 NavigateToFile(randomFile);
 
-                // Pick a random starting position within the file's duration
-                TimeSpan randomStartPosition = TimeSpan.FromSeconds(random.Next(0, (int)new AudioFileReader(randomFile).TotalTime.TotalSeconds));
+                // Determine if this is a 3-level or 4-level structure to decide on random position
+                string[] pathParts = randomFile.Replace(musicLibraryPath, "").Split(Path.DirectorySeparatorChar, StringSplitOptions.RemoveEmptyEntries);
+                
+                TimeSpan? randomStartPosition = null;
+                
+                // Only apply random position for 3-level structure (full show files)
+                if (pathParts.Length == 3)
+                {
+                    // 3-level: Band/Year/ShowFile.mp3 - apply random position within the show
+                    using (var tempReader = new AudioFileReader(randomFile))
+                    {
+                        randomStartPosition = TimeSpan.FromSeconds(random.Next(0, (int)tempReader.TotalTime.TotalSeconds));
+                    }
+                    System.Diagnostics.Debug.WriteLine($"Random play (3-level): {randomFile} starting at {randomStartPosition}");
+                }
+                else
+                {
+                    // 4-level: Band/Year/Show/Song.mp3 - play individual song from beginning
+                    System.Diagnostics.Debug.WriteLine($"Random play (4-level): {randomFile} starting from beginning");
+                }
 
-                // Play the random file starting at the random position
+                // Play the random file
                 PlayShow(randomFile, randomStartPosition);
-
-                System.Diagnostics.Debug.WriteLine($"Random play: {randomFile} starting at {randomStartPosition}");
             }
             catch (Exception ex)
             {
