@@ -38,7 +38,7 @@ namespace MyMusicPlayer
             this.ShowIcon = false;
 
             // Version label
-            this.lblVersion.Text = "Jerry Player Version 1.0";
+            this.lblVersion.Text = "Jerry Player Version 1.0.2";
             this.lblVersion.Font = new Font("Segoe UI", 16F, FontStyle.Bold);
             this.lblVersion.ForeColor = ColorTranslator.FromHtml("#D2691E");
             this.lblVersion.Location = new Point(20, 20);
@@ -54,7 +54,7 @@ namespace MyMusicPlayer
             this.lblDevelopmentMessage.TextAlign = ContentAlignment.MiddleCenter;
 
             // Donation URL text box
-            this.txtDonationUrl.Text = "https://buymeacoffee.com/shrimptastic";
+            this.txtDonationUrl.Text = "https://buymeacoffee.com/jerryplayer";
             this.txtDonationUrl.Font = new Font("Segoe UI", 11F, FontStyle.Regular);
             this.txtDonationUrl.Location = new Point(20, 160);
             this.txtDonationUrl.Size = new Size(350, 30);
