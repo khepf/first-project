@@ -1,25 +1,20 @@
 using NAudio.Wave;
 using System.Drawing.Drawing2D;
 using System.Linq;
+using MyMusicPlayer.Services;
 
 namespace MyMusicPlayer
 {
     public partial class Form1 : Form
     {
-        private string musicLibraryPath = GetMusicLibraryPath();
-        private WaveOutEvent? outputDevice;
-        private AudioFileReader? audioFile;
-        private float currentVolume = 0.7f;
-        private float volumeBeforeMute = 0.7f;
-        private bool isMuted = false;
-        private bool isPaused = false;
+        private AudioPlayer audioPlayer;
+        private MusicLibraryService musicLibraryService;
         private System.Windows.Forms.Timer? progressTimer;
         private bool isUserDragging = false;
         private string currentShowPath = "";
         private string currentFolderPath = "";
         private string currentShowFolderPath = "";
         private Random random = new Random();
-        private WaveformSampleProvider? waveformSampleProvider;
 
         public Form1()
         {
@@ -28,10 +23,15 @@ namespace MyMusicPlayer
             MaximizeBox = false;
             MinimizeBox = true;
             
+            // Initialize services
+            musicLibraryService = new MusicLibraryService();
+            audioPlayer = new AudioPlayer();
+            SetupServiceEvents();
+            
             // Initialize UI components first (fast operations)
             if (trackVolume != null)
             {
-                trackVolume.Value = (int)(currentVolume * 100);
+                trackVolume.Value = (int)(audioPlayer.Volume * 100);
             }
             UpdateSpeakerIcon();
             StyleVolumeLabel();
@@ -41,6 +41,79 @@ namespace MyMusicPlayer
             
             // Defer heavy operations until after form is shown
             this.Shown += Form1_Shown;
+        }
+        
+        private void SetupServiceEvents()
+        {
+            SetupAudioPlayerEvents();
+            SetupMusicLibraryServiceEvents();
+        }
+        
+        private void SetupMusicLibraryServiceEvents()
+        {
+            musicLibraryService.LibraryChanged += (sender, e) =>
+            {
+                // Reload the interface when library path changes
+                LoadMainFolders();
+            };
+        }
+        
+        private void SetupAudioPlayerEvents()
+        {
+            audioPlayer.PlaybackStateChanged += (sender, e) =>
+            {
+                // Update UI based on playback state
+                UpdateButtonStates();
+                if (e.State == PlaybackState.Playing)
+                {
+                    spinningCassette.IsSpinning = true;
+                    StartProgressTimer();
+                }
+                else if (e.State == PlaybackState.Paused)
+                {
+                    spinningCassette.IsSpinning = false;
+                    StopProgressTimer();
+                }
+            };
+            
+            audioPlayer.PlaybackStopped += (sender, e) =>
+            {
+                // Clear UI when playback stops
+                lblCurrentlyPlaying.Text = "";
+                lblCurrentPath.Text = "";
+                spinningCassette.IsSpinning = false;
+                trackProgress.Value = 0;
+                lblCurrentTime.Text = "00:00";
+                lblTotalTime.Text = "00:00";
+                currentShowPath = "";
+                StopProgressTimer();
+                UpdateButtonStates();
+            };
+            
+            audioPlayer.VolumeChanged += (sender, e) =>
+            {
+                // Update volume UI
+                if (trackVolume != null)
+                {
+                    trackVolume.Value = (int)(e.Volume * 100);
+                }
+                UpdateSpeakerIcon();
+            };
+        }
+        
+        private void StartProgressTimer()
+        {
+            if (progressTimer == null)
+            {
+                progressTimer = new System.Windows.Forms.Timer { Interval = 100 };
+                progressTimer.Tick += ProgressTimer_Tick;
+            }
+            progressTimer.Start();
+        }
+        
+        private void StopProgressTimer()
+        {
+            progressTimer?.Stop();
         }
         
         private Image? LoadEmbeddedImage(string imageName)
@@ -143,36 +216,30 @@ namespace MyMusicPlayer
             if (sender is TrackBar volumeBar)
             {
                 // If user manually changes volume, unmute automatically
-                if (isMuted && volumeBar.Value > 0)
+                if (audioPlayer.IsMuted && volumeBar.Value > 0)
                 {
-                    isMuted = false;
+                    audioPlayer.IsMuted = false;
                 }
 
-                currentVolume = volumeBar.Value / 100.0f;
+                audioPlayer.Volume = volumeBar.Value / 100.0f;
 
                 // Update speaker icon based on mute state and volume level
                 UpdateSpeakerIcon();
 
-                // Apply volume to current audio output (only if not muted)
-                if (outputDevice != null)
-                {
-                    outputDevice.Volume = isMuted ? 0.0f : currentVolume;
-                }
-
-                System.Diagnostics.Debug.WriteLine($"Volume changed to: {volumeBar.Value}% (Muted: {isMuted})");
+                System.Diagnostics.Debug.WriteLine($"Volume changed to: {volumeBar.Value}% (Muted: {audioPlayer.IsMuted})");
             }
         }
 
         private void LblVolume_Click(object? sender, EventArgs e)
         {
-            ToggleMute();
+            audioPlayer.ToggleMute();
         }
 
         private void UpdateSpeakerIcon()
         {
             if (lblVolume != null)
             {
-                if (isMuted)
+                if (audioPlayer.IsMuted)
                 {
                     lblVolume.Text = "🔇"; // Muted speaker icon
                 }
@@ -232,101 +299,72 @@ namespace MyMusicPlayer
         
         private void NavigateToFile(string filePath)
         {
-            try
+            var navigation = musicLibraryService.NavigateToFile(filePath);
+            if (navigation == null) return;
+
+            // Update collection dial
+            for (int i = 0; i < dialCollection.Items.Count; i++)
             {
-                // Extract the path components
-                string relativePath = Path.GetRelativePath(musicLibraryPath, filePath);
-                string[] pathParts = relativePath.Split(Path.DirectorySeparatorChar);
-
-                if (pathParts.Length >= 3) // Should be: Collection/Year/filename.mp3 or Collection/Year/ShowFolder/filename.mp3
+                if (dialCollection.Items[i] == navigation.Collection)
                 {
-                    string collection = pathParts[0];
-                    string year = pathParts[1];
-                    string fileName = "";
-                    string showFolder = "";
-
-                    // Determine if this is 3-level or 4-level structure
-                    if (pathParts.Length == 3)
-                    {
-                        // 3-level: Collection/Year/filename.mp3
-                        fileName = Path.GetFileNameWithoutExtension(pathParts[2]);
-                    }
-                    else if (pathParts.Length >= 4)
-                    {
-                        // 4-level: Collection/Year/ShowFolder/filename.mp3
-                        showFolder = pathParts[2];
-                        fileName = Path.GetFileNameWithoutExtension(pathParts[3]);
-                    }
-
-                    // Update collection dial
-                    for (int i = 0; i < dialCollection.Items.Count; i++)
-                    {
-                        if (dialCollection.Items[i] == collection)
-                        {
-                            dialCollection.SelectedIndex = i;
-                            break;
-                        }
-                    }
-
-                    // Load years for the selected collection
-                    LoadYears();
-
-                    // Update year dial
-                    for (int i = 0; i < dialYear.Items.Count; i++)
-                    {
-                        if (dialYear.Items[i] == year)
-                        {
-                            dialYear.SelectedIndex = i;
-                            break;
-                        }
-                    }
-
-                    // Load shows for the selected year
-                    LoadShows();
-
-                    // For 4-level structure, navigate into the show folder to show the individual song
-                    if (pathParts.Length >= 4 && !string.IsNullOrEmpty(showFolder))
-                    {
-                        // Set the show folder path and load songs from it
-                        currentShowFolderPath = Path.Combine(currentFolderPath, showFolder);
-                        LoadSongsFromShowFolder();
-                        
-                        // Select the specific song in the list
-                        string songItem = "🎵 " + fileName;
-                        for (int i = 0; i < lstShows.Items.Count; i++)
-                        {
-                            if (lstShows.Items[i].Text == songItem)
-                            {
-                                lstShows.Items[i].Selected = true;
-                                lstShows.Items[i].Focused = true;
-                                lstShows.EnsureVisible(i); // Scroll to make it visible
-                                break;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        // 3-level structure: select the file directly
-                        string showItem = "🎵 " + fileName;
-                        for (int i = 0; i < lstShows.Items.Count; i++)
-                        {
-                            if (lstShows.Items[i].Text == showItem)
-                            {
-                                lstShows.Items[i].Selected = true;
-                                lstShows.Items[i].Focused = true;
-                                lstShows.EnsureVisible(i); // Scroll to make it visible
-                                break;
-                            }
-                        }
-                    }
-
-                    Console.WriteLine($"Navigated to: {collection} -> {year} -> {(string.IsNullOrEmpty(showFolder) ? fileName : showFolder + "/" + fileName)}");
+                    dialCollection.SelectedIndex = i;
+                    break;
                 }
             }
-            catch (Exception ex)
+
+            // Load years for the selected collection
+            LoadYears();
+
+            // Update year dial
+            for (int i = 0; i < dialYear.Items.Count; i++)
             {
-                System.Diagnostics.Debug.WriteLine($"Error navigating to file: {ex.Message}");
+                if (dialYear.Items[i] == navigation.Year)
+                {
+                    dialYear.SelectedIndex = i;
+                    break;
+                }
             }
+
+            // Load shows for the selected year
+            LoadShows();
+
+            // For 4-level structure, navigate into the show folder to show the individual song
+            if (!navigation.IsDirectFile && !string.IsNullOrEmpty(navigation.ShowFolder))
+            {
+                // Set the show folder path and load songs from it
+                currentShowFolderPath = Path.Combine(musicLibraryService.LibraryPath, navigation.Collection, navigation.Year, navigation.ShowFolder);
+                LoadSongsFromShowFolder();
+                
+                // Select the specific song in the list
+                string songItem = "🎵 " + navigation.FileName;
+                for (int i = 0; i < lstShows.Items.Count; i++)
+                {
+                    if (lstShows.Items[i].Text == songItem)
+                    {
+                        lstShows.Items[i].Selected = true;
+                        lstShows.Items[i].Focused = true;
+                        lstShows.EnsureVisible(i); // Scroll to make it visible
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                // 3-level structure: select the file directly
+                string showItem = "🎵 " + navigation.FileName;
+                for (int i = 0; i < lstShows.Items.Count; i++)
+                {
+                    if (lstShows.Items[i].Text == showItem)
+                    {
+                        lstShows.Items[i].Selected = true;
+                        lstShows.Items[i].Focused = true;
+                        lstShows.EnsureVisible(i); // Scroll to make it visible
+                        break;
+                    }
+                }
+            }
+
+            Console.WriteLine($"Navigated to: {navigation.Collection} -> {navigation.Year} -> {(navigation.IsDirectFile ? navigation.FileName : navigation.ShowFolder + "/" + navigation.FileName)}");
         }
 
         private void LstShows_DrawItem(object? sender, DrawListViewItemEventArgs e)
@@ -545,11 +583,11 @@ namespace MyMusicPlayer
             dialYear.ClearItems();
             lstShows.Items.Clear();
 
-            Console.WriteLine($"Music library path: '{musicLibraryPath}'");
-            Console.WriteLine($"Directory exists: {Directory.Exists(musicLibraryPath)}");
+            Console.WriteLine($"Music library path: '{musicLibraryService.LibraryPath}'");
+            Console.WriteLine($"Directory exists: {musicLibraryService.HasValidLibrary}");
 
             // Check if music library path is set and exists
-            if (string.IsNullOrEmpty(musicLibraryPath))
+            if (!musicLibraryService.HasValidLibrary)
             {
                 Console.WriteLine("No music library path set. Use Settings button to select a folder.");
                 // Display greeting when no music library is set
@@ -566,52 +604,39 @@ namespace MyMusicPlayer
                 return;
             }
 
-            if (Directory.Exists(musicLibraryPath))
+            try
             {
-                try
+                // Get collections from the music library service
+                var collections = musicLibraryService.GetCollections();
+                
+                foreach (var collection in collections)
                 {
-                    // Use faster directory enumeration
-                    var directories = Directory.EnumerateDirectories(musicLibraryPath);
-                    
-                    foreach (var folder in directories)
-                    {
-                        string folderName = Path.GetFileName(folder);
-                        Console.WriteLine($"Adding folder: {folderName}");
-                        dialCollection.AddItem(folderName);
-                    }
-
-                    // Select the first folder if available
-                    if (dialCollection.Items.Count > 0)
-                    {
-                        dialCollection.SelectedIndex = 0;
-                    }
-                    else
-                    {
-                        // No folders found, display greeting
-                        var greetingItem1 = new ListViewItem("I'M SORRY DAVE");
-                        var greetingItem2 = new ListViewItem("FOLDER NOT FOUND");
-                        lstShows.Items.Add(greetingItem1);
-                        lstShows.Items.Add(greetingItem2);
-                    }
+                    Console.WriteLine($"Adding folder: {collection}");
+                    dialCollection.AddItem(collection);
                 }
-                catch (Exception ex)
+
+                // Select the first folder if available
+                if (dialCollection.Items.Count > 0)
                 {
-                    // Handle errors gracefully
-                    Console.WriteLine($"Error loading folders: {ex.Message}");
-                    var errorItem1 = new ListViewItem("I'M SORRY DAVE");
-                    var errorItem2 = new ListViewItem("ERROR LOADING FOLDERS");
-                    lstShows.Items.Add(errorItem1);
-                    lstShows.Items.Add(errorItem2);
+                    dialCollection.SelectedIndex = 0;
+                }
+                else
+                {
+                    // No folders found, display greeting
+                    var greetingItem1 = new ListViewItem("I'M SORRY DAVE");
+                    var greetingItem2 = new ListViewItem("FOLDER NOT FOUND");
+                    lstShows.Items.Add(greetingItem1);
+                    lstShows.Items.Add(greetingItem2);
                 }
             }
-            else
+            catch (Exception ex)
             {
-                Console.WriteLine($"Music directory does not exist: {musicLibraryPath}");
-                // Display greeting when music directory doesn't exist
-                var greetingItem1 = new ListViewItem("I'M SORRY DAVE");
-                var greetingItem2 = new ListViewItem("FOLDER NOT FOUND");
-                lstShows.Items.Add(greetingItem1);
-                lstShows.Items.Add(greetingItem2);
+                // Handle errors gracefully
+                Console.WriteLine($"Error loading folders: {ex.Message}");
+                var errorItem1 = new ListViewItem("I'M SORRY DAVE");
+                var errorItem2 = new ListViewItem("ERROR LOADING FOLDERS");
+                lstShows.Items.Add(errorItem1);
+                lstShows.Items.Add(errorItem2);
             }
 
             UpdateButtonStates();
@@ -622,7 +647,7 @@ namespace MyMusicPlayer
             using (FolderBrowserDialog folderDialog = new FolderBrowserDialog())
             {
                 folderDialog.Description = "Select your Music Library folder";
-                folderDialog.SelectedPath = musicLibraryPath;
+                folderDialog.SelectedPath = musicLibraryService.LibraryPath ?? "";
                 folderDialog.ShowNewFolderButton = true;
 
                 if (folderDialog.ShowDialog() == DialogResult.OK)
@@ -646,9 +671,9 @@ namespace MyMusicPlayer
                                 return;
                         }
                         
-                        // Update the music library path
-                        musicLibraryPath = newPath;
-                        Console.WriteLine($"Music library path changed to: {musicLibraryPath}");
+                        // Update the music library path through the service
+                        musicLibraryService.LibraryPath = newPath;
+                        Console.WriteLine($"Music library path changed to: {musicLibraryService.LibraryPath}");
                         
                         // Reload the entire interface with the new path
                         LoadMainFolders();
@@ -668,11 +693,10 @@ namespace MyMusicPlayer
         {
             bool hasSelectedItem = lstShows.SelectedItems.Count > 0;
             bool hasLoadedFile = !string.IsNullOrEmpty(currentShowPath) && File.Exists(currentShowPath);
-            bool isPlaying = outputDevice?.PlaybackState == PlaybackState.Playing;
-            bool isPausedState = outputDevice?.PlaybackState == PlaybackState.Paused;
-            bool hasMusicLibrary = !string.IsNullOrEmpty(musicLibraryPath) &&
-                                Directory.Exists(musicLibraryPath) &&
-                                GetAllAudioFiles(musicLibraryPath).Count > 0;
+            bool isPlaying = audioPlayer.IsPlaying;
+            bool isPausedState = audioPlayer.IsPaused;
+            bool hasMusicLibrary = musicLibraryService.HasValidLibrary &&
+                                musicLibraryService.GetAllAudioFiles().Count > 0;
 
             // Enable Play/Pause button if there's a selected item, loaded file, or something playing/paused
             btnPlay.Enabled = hasSelectedItem || hasLoadedFile || isPlaying || isPausedState;
@@ -714,34 +738,26 @@ namespace MyMusicPlayer
             if (dialCollection.SelectedItem == null) return;
 
             string selectedMainFolder = dialCollection.SelectedItem;
-            string mainFolderPath = Path.Combine(musicLibraryPath, selectedMainFolder);
-
-            if (Directory.Exists(mainFolderPath))
+            
+            try
             {
-                try
-                {
-                    // Use faster directory enumeration and streaming operations
-                    var yearFolders = Directory.EnumerateDirectories(mainFolderPath)
-                        .Select(dir => Path.GetFileName(dir))
-                        .Where(name => int.TryParse(name, out _)) // Only include folders that are numeric (years)
-                        .OrderBy(year => int.Parse(year))
-                        .ToList();
+                // Get years for the selected collection from the service
+                var years = musicLibraryService.GetYears(selectedMainFolder);
 
-                    foreach (string year in yearFolders)
-                    {
-                        dialYear.AddItem(year);
-                    }
-
-                    // Select the first year if available
-                    if (dialYear.Items.Count > 0)
-                    {
-                        dialYear.SelectedIndex = 0;
-                    }
-                }
-                catch (Exception ex)
+                foreach (string year in years)
                 {
-                    Console.WriteLine($"Error loading years: {ex.Message}");
+                    dialYear.AddItem(year);
                 }
+
+                // Select the first year if available
+                if (dialYear.Items.Count > 0)
+                {
+                    dialYear.SelectedIndex = 0;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading years: {ex.Message}");
             }
             UpdateButtonStates(); // Update after loading years
         }
@@ -772,7 +788,7 @@ namespace MyMusicPlayer
 
             string selectedMainFolder = dialCollection.SelectedItem;
             string selectedYear = dialYear.SelectedItem;
-            currentFolderPath = Path.Combine(musicLibraryPath, selectedMainFolder, selectedYear);
+            currentFolderPath = Path.Combine(musicLibraryService.LibraryPath, selectedMainFolder, selectedYear);
 
             // Check if we're currently inside a show folder (4-level drill-down)
             if (!string.IsNullOrEmpty(currentShowFolderPath) && Directory.Exists(currentShowFolderPath))
@@ -1020,34 +1036,12 @@ namespace MyMusicPlayer
 
         private void PlayShow(string filePath, TimeSpan? startPosition = null)
         {
-            // Stop any current playback and timer
-            outputDevice?.Stop();
-            outputDevice?.Dispose();
-            audioFile?.Dispose();
-            progressTimer?.Stop();
-            progressTimer?.Dispose();
-            waveformSampleProvider?.ClearWaveform();
-
             currentShowPath = filePath;
-            outputDevice = new WaveOutEvent();
-            audioFile = new AudioFileReader(filePath);
-
-            // Set the starting position if provided
-            if (startPosition.HasValue && startPosition.Value < audioFile.TotalTime)
-            {
-                audioFile.CurrentTime = startPosition.Value;
-            }
-
-            // Create waveform sample provider to capture audio data for visualization
-            waveformSampleProvider = new WaveformSampleProvider(audioFile, waveformDisplay);
             
-            outputDevice.Init(waveformSampleProvider);
-            // Apply current volume considering mute state
-            outputDevice.Volume = isMuted ? 0.0f : currentVolume;
-            outputDevice.Play();
-            isPaused = false;
+            // Use AudioPlayer to handle playback
+            audioPlayer.Play(filePath, startPosition, waveformDisplay);
+            
             btnPlay.Text = "⏸";
-            spinningCassette.IsSpinning = true;
 
             // UPDATE THE CURRENTLY PLAYING LABEL
             string fileName = Path.GetFileNameWithoutExtension(filePath);
@@ -1060,13 +1054,8 @@ namespace MyMusicPlayer
             }
 
             // Set up progress tracking
-            trackProgress.Maximum = (int)audioFile.TotalTime.TotalSeconds;
-            lblTotalTime.Text = FormatTime(audioFile.TotalTime);
-
-            // Start progress timer
-            progressTimer = new System.Windows.Forms.Timer { Interval = 100 };
-            progressTimer.Tick += ProgressTimer_Tick;
-            progressTimer.Start();
+            trackProgress.Maximum = (int)audioPlayer.TotalTime.TotalSeconds;
+            lblTotalTime.Text = FormatTime(audioPlayer.TotalTime);
 
             // Highlight the currently playing show in the list
             HighlightCurrentShow(filePath);
@@ -1087,34 +1076,8 @@ namespace MyMusicPlayer
 
         private void ToggleMute()
         {
-            if (isMuted)
-            {
-                // Unmute: restore previous volume
-                isMuted = false;
-                currentVolume = volumeBeforeMute;
-                
-                if (trackVolume != null)
-                {
-                    trackVolume.Value = (int)(currentVolume * 100);
-                }
-            }
-            else
-            {
-                // Mute: store current volume and set to 0
-                volumeBeforeMute = currentVolume;
-                isMuted = true;
-            }
-
-            // Apply the volume change to the output device
-            if (outputDevice != null)
-            {
-                outputDevice.Volume = isMuted ? 0.0f : currentVolume;
-            }
-
-            // Update the speaker icon
-            UpdateSpeakerIcon();
-            
-            System.Diagnostics.Debug.WriteLine($"Mute toggled: {(isMuted ? "MUTED" : "UNMUTED")} - Volume: {(int)(currentVolume * 100)}%");
+            audioPlayer.ToggleMute();
+            System.Diagnostics.Debug.WriteLine($"Mute toggled: {(audioPlayer.IsMuted ? "MUTED" : "UNMUTED")} - Volume: {(int)(audioPlayer.Volume * 100)}%");
         }
 
         private void HighlightCurrentShow(string showPath)
@@ -1276,14 +1239,14 @@ namespace MyMusicPlayer
 
         private void ProgressTimer_Tick(object? sender, EventArgs e)
         {
-            if (audioFile != null && outputDevice != null && !isUserDragging)
+            if (!audioPlayer.IsStopped && !isUserDragging)
             {
-                int currentSeconds = (int)audioFile.CurrentTime.TotalSeconds;
+                int currentSeconds = (int)audioPlayer.CurrentTime.TotalSeconds;
                 trackProgress.Value = Math.Min(currentSeconds, trackProgress.Maximum);
-                lblCurrentTime.Text = FormatTime(audioFile.CurrentTime);
+                lblCurrentTime.Text = FormatTime(audioPlayer.CurrentTime);
 
                 // Check if show has ended
-                if (outputDevice.PlaybackState == PlaybackState.Stopped && trackProgress.Value > 0)
+                if (audioPlayer.IsStopped && trackProgress.Value > 0)
                 {
                     // Try to play the next song automatically
                     if (!PlayNextSong())
@@ -1305,16 +1268,16 @@ namespace MyMusicPlayer
 
         private void TrackProgress_MouseUp(object? sender, MouseEventArgs e)
         {
-            if (isUserDragging && audioFile != null)
+            if (isUserDragging && !audioPlayer.IsStopped)
             {
                 // Set the audio position to the trackbar value
-                audioFile.CurrentTime = TimeSpan.FromSeconds(trackProgress.Value);
-                lblCurrentTime.Text = FormatTime(audioFile.CurrentTime);
+                audioPlayer.SetPosition(TimeSpan.FromSeconds(trackProgress.Value));
+                lblCurrentTime.Text = FormatTime(audioPlayer.CurrentTime);
 
                 isUserDragging = false;
 
                 // Restart timer if playing
-                if (!isPaused && outputDevice?.PlaybackState == PlaybackState.Playing)
+                if (audioPlayer.IsPlaying)
                 {
                     progressTimer?.Start();
                 }
@@ -1323,7 +1286,7 @@ namespace MyMusicPlayer
 
         private void TrackProgress_ValueChanged(object? sender, EventArgs e)
         {
-            if (audioFile != null && isUserDragging)
+            if (!audioPlayer.IsStopped && isUserDragging)
             {
                 // Update time display while dragging
                 lblCurrentTime.Text = FormatTime(TimeSpan.FromSeconds(trackProgress.Value));
@@ -1333,7 +1296,7 @@ namespace MyMusicPlayer
         private void BtnPlayPause_Click(object? sender, EventArgs e)
         {
             // If nothing is loaded and a show is selected, load and play it
-            if (lstShows.SelectedItems.Count > 0 && (outputDevice == null || outputDevice.PlaybackState == PlaybackState.Stopped))
+            if (lstShows.SelectedItems.Count > 0 && audioPlayer.IsStopped)
             {
                 string selectedItem = lstShows.SelectedItems[0].Text ?? "";
                 var selectedTag = lstShows.SelectedItems[0].Tag;
@@ -1399,24 +1362,19 @@ namespace MyMusicPlayer
             }
 
             // If currently playing, pause it
-            if (outputDevice?.PlaybackState == PlaybackState.Playing)
+            if (audioPlayer.IsPlaying)
             {
-                outputDevice.Pause();
-                isPaused = true;
+                audioPlayer.Pause();
                 btnPlay.Text = "▶";  // Change to play icon
-                progressTimer?.Stop();
-                spinningCassette.IsSpinning = false;
-                waveformSampleProvider?.ClearWaveform(); // Clear waveform when paused
+                StopProgressTimer();
             }
             // If currently paused, resume it
-            else if (outputDevice?.PlaybackState == PlaybackState.Paused)
+            else if (audioPlayer.IsPaused)
             {
-                outputDevice.Play();
-                isPaused = false;
+                audioPlayer.Resume();
                 btnPlay.Text = "⏸";  // Change to pause icon
                 if (!isUserDragging)
-                    progressTimer?.Start();
-                spinningCassette.IsSpinning = true;
+                    StartProgressTimer();
             }
             // If stopped but we have a loaded show, restart from beginning
             else if (!string.IsNullOrEmpty(currentShowPath) && File.Exists(currentShowPath))
@@ -1430,17 +1388,10 @@ namespace MyMusicPlayer
 
         private void BtnStop_Click(object? sender, EventArgs e)
         {
-            outputDevice?.Stop();
-            outputDevice?.Dispose();
-            audioFile?.Dispose();
-            progressTimer?.Stop();
+            audioPlayer.Stop();
+            StopProgressTimer();
             progressTimer?.Dispose();
-            waveformSampleProvider?.ClearWaveform();
-            outputDevice = null;
-            audioFile = null;
             progressTimer = null;
-            waveformSampleProvider = null;
-            isPaused = false;
             btnPlay.Text = "▶";  // Reset to play icon when stopped
             trackProgress.Value = 0;
             lblCurrentTime.Text = "00:00";
@@ -1452,6 +1403,7 @@ namespace MyMusicPlayer
             spinningCassette.IsSpinning = false;
 
             isUserDragging = false;
+            currentShowPath = "";
             UpdateButtonStates();
         }
 
@@ -1460,7 +1412,7 @@ namespace MyMusicPlayer
             try
             {
                 // Get all audio files from the entire music library
-                List<string> allAudioFiles = GetAllAudioFiles(musicLibraryPath);
+                List<string> allAudioFiles = musicLibraryService.GetAllAudioFiles();
 
                 if (allAudioFiles.Count == 0)
                 {
@@ -1476,7 +1428,7 @@ namespace MyMusicPlayer
                 NavigateToFile(randomFile);
 
                 // Determine if this is a 3-level or 4-level structure to decide on random position
-                string[] pathParts = randomFile.Replace(musicLibraryPath, "").Split(Path.DirectorySeparatorChar, StringSplitOptions.RemoveEmptyEntries);
+                string[] pathParts = randomFile.Replace(musicLibraryService.LibraryPath, "").Split(Path.DirectorySeparatorChar, StringSplitOptions.RemoveEmptyEntries);
                 
                 TimeSpan? randomStartPosition = null;
                 

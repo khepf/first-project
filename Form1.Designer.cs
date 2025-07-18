@@ -36,6 +36,10 @@ partial class Form1
         {
             components.Dispose();
         }
+        
+        // Dispose of our AudioPlayer
+        audioPlayer?.Dispose();
+        
         base.Dispose(disposing);
     }
 
@@ -228,7 +232,7 @@ partial class Form1
         this.trackVolume.Value = 70;
         this.trackVolume.TabStop = false;
         this.trackVolume.ValueChanged += new System.EventHandler(this.TrackVolume_ValueChanged);
-        
+
         // Add all controls to the form
         this.Controls.Add(this.picBottomBoard); // Add parent first
         
