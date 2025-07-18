@@ -14,21 +14,46 @@ Jerry Player is a retro-style music player with a unique cassette tape interface
 
 2. **Prepare Your Music Library**
    - Create a folder called `Music` in the same location as the `MyMusicPlayer.exe` file
-   - Inside the `Music` folder, organize your MP3 files into subfolders
-   - **Example folder structure:**
-     ```
-     Music/
-     ├── Example Band 1
-     │   ├── 1975
-     │   │   └── Red Rocks, Colorado
-     │   └── 1976
-     │       └── The Slippery Biscuit, Dayton Ohio
-     └── Example Band 2
-         ├── 1980
-         │   └── Jackson Stadium, Chicago Illinois
-         └── 1985
-             └── Ed's Coffee Emporium, Toronto Canada
-     ```
+   - Inside the `Music` folder, organize your MP3/FLAC files into subfolders
+   - **Jerry Player supports two folder structures:**
+   
+   **Option A - Direct Files (3-level):**
+   ```
+   Music/
+   ├── Example Band 1
+   │   ├── 1975
+   │   │   └── Red Rocks, Colorado.mp3
+   │   └── 1976
+   │       └── The Slippery Biscuit, Dayton Ohio.flac
+   └── Example Band 2
+       ├── 1980
+       │   └── Jackson Stadium, Chicago Illinois.mp3
+       └── 1985
+           └── Ed's Coffee Emporium, Toronto Canada.mp3
+   ```
+   
+   **Option B - Show Folders (4-level):**
+   ```
+   Music/
+   ├── Example Band 1
+   │   ├── 1975
+   │   │   └── Red Rocks, Colorado
+   │   │       ├── 01 - Opening Song.mp3
+   │   │       ├── 02 - Second Song.mp3
+   │   │       └── 03 - Encore.mp3
+   │   └── 1976
+   │       └── The Slippery Biscuit, Dayton Ohio
+   │           ├── Track 1.flac
+   │           └── Track 2.flac
+   └── Example Band 2
+       ├── 1980
+       │   └── Jackson Stadium, Chicago Illinois
+       │       ├── Song A.mp3
+       │       └── Song B.mp3
+       └── 1985
+           └── Ed's Coffee Emporium, Toronto Canada
+               └── Full Show.mp3
+   ```
 
 3. **Launch Jerry Player**
    - Double-click `JerryPlayer.exe` to start the application
@@ -48,7 +73,9 @@ Jerry Player is a retro-style music player with a unique cassette tape interface
 
 The main screen shows:
 - **Music folders** from your library (when no folder is selected)
-- **Song list** from the selected folder
+- **Show list** from the selected folder
+  - **🎵 Single Files**: Individual audio files (3-level structure)
+  - **📁 Show Folders**: Folders containing multiple songs (4-level structure)
 - **Current playing information** during playback
 
 ### The Dials
@@ -76,8 +103,12 @@ Two circular dials on the interface help you navigate:
 
 2. **Use the Right Dial to Choose a Year From the Currently Selected Band**
 
-3. **Double-click on any show to start playing it**
-   - OR select a show and click the ▶ Play button
+3. **For different folder structures:**
+   - **🎵 Single Files**: Double-click to play the audio file directly
+   - **📁 Show Folders**: Double-click to navigate into the folder and see individual songs
+     - Once inside a show folder, you'll see individual songs with a "⬅️ BACK TO SHOWS" option
+     - Double-click any song to play it
+   - OR select any item and click the ▶ Play button
 
 4. **Control Playback**
    - **Play/Pause**: Click ▶ to play or ⏸ to pause
@@ -89,6 +120,14 @@ Two circular dials on the interface help you navigate:
 
 - Click the **🎲 Random Button** to instantly play a random show from your entire music library
 - The player will automatically navigate to the show's location and start playing from a random position
+- **For 4-level structures**: The interface will drill down to show the specific song playing within the show folder
+
+### Continuous Playback
+
+- **Automatic Advancement**: When a song finishes playing, the next song in the current list will automatically start
+- **Seamless Experience**: No gaps between songs for uninterrupted listening
+- **Smart Navigation**: Automatically skips non-playable items (back buttons, separators, info items)
+- **Works Everywhere**: Functions in both 3-level structure (year view) and 4-level structure (within show folders)
 
 ### Changing Your Music Library
 
@@ -100,9 +139,12 @@ Two circular dials on the interface help you navigate:
 
 ### Organizing Your Music
 
-- **Use band names for folder names**  "Led Balloon", "The What", "Happily Committed", etc.
+- **Use band names for folder names**: "Led Balloon", "The What", "Happily Committed", etc.
 - **Use the year the show took place as the subfolder name**
-- **Make sure each file name of the show is consistent. example: Year, City, State, Venue**
+- **Choose your preferred structure**:
+  - **3-level**: For single-file shows (concerts recorded as one file)
+  - **4-level**: For multi-track shows (individual songs in show folders)
+- **File naming**: Use consistent naming for easy browsing
 - **Avoid special characters** in folder and file names
 
 ### Playback Tips
@@ -113,8 +155,9 @@ Two circular dials on the interface help you navigate:
 
 ### Navigation Tips
 
-- **Double-click shows** for quick playback
+- **Double-click shows** for quick playback (3-level) or navigation (4-level)
 - **Use the dials** for smooth navigation through your library
+- **Navigate show folders**: Double-click 📁 folders to see individual songs, use ⬅️ BACK to return
 - **Random play** is great for discovering forgotten shows in your collection
 
 ## Troubleshooting
@@ -148,7 +191,8 @@ This appears when:
 
 - **Operating System**: Windows 10 or later
 - **Audio**: Sound card or audio output device
-- **File Format**: MP3 audio files only
+- **File Format**: MP3 and FLAC audio files
+- **Folder Structure**: Supports both 3-level and 4-level organization
 - **Storage**: Minimal space required (application is self-contained)
 
 ## Keyboard Shortcuts

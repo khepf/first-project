@@ -5,6 +5,26 @@ All notable changes to Jerry Player will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0]
+
+### Added
+- **Dual folder structure support**: Automatic detection and support for both 3-level and 4-level music organization
+  - **3-level**: Music → Band → Year → audio_file.mp3/flac
+  - **4-level**: Music → Band → Year → Show_Folder → song_files.mp3/flac
+- **Drill-down navigation for show folders**: Users can now navigate into show folders to see and select individual songs
+  - Double-click 📁 show folders to view individual tracks
+  - ⬅️ "BACK TO SHOWS" navigation option when inside show folders
+  - Visual distinction between folder view and song view
+- **Enhanced random play navigation**: Random button now properly drills down to show specific songs in 4-level structures
+- **Continuous playback**: Automatic advancement to the next song when current song ends
+  - Seamless transitions with no gaps between songs
+  - Smart navigation that skips non-playable items (back buttons, separators, info items)
+  - Works in both 3-level and 4-level folder structures
+- Visual distinction between single files (🎵) and show folders (📁) in the interface
+- Enhanced navigation system that handles both folder structures seamlessly
+- Smart file detection prioritizes direct audio files over show folders when both exist
+- Improved user interface with special styling for navigation elements
+
 ## [1.0.2] - 2025-01-18
 ### Added
 - Real-time waveform display visualization during playback

@@ -111,8 +111,8 @@ partial class Form1
         this.spinningCassette.BackColor = Color.Transparent;
 
         // Waveform display - positioned between cassette wheels
-        this.waveformDisplay.Location = new System.Drawing.Point(132, 65); // Centered between wheels (125 to 211)
-        this.waveformDisplay.Size = new System.Drawing.Size(74, 48); // Slightly narrower to fit better
+        this.waveformDisplay.Location = new System.Drawing.Point(132, 65);
+        this.waveformDisplay.Size = new System.Drawing.Size(74, 48);
 
         // bottom wood board image
         this.picBottomBoard.Size = new System.Drawing.Size(800, 220);
@@ -179,55 +179,56 @@ partial class Form1
 
         // square digital time display (current time of show) - coordinates relative to picBottomBoard
         this.lblCurrentTime.Text = "00:00";
-        this.lblCurrentTime.Location = new System.Drawing.Point(50, 70); // Changed from (50, 500)
+        this.lblCurrentTime.Location = new System.Drawing.Point(50, 70);
         this.lblCurrentTime.Size = new System.Drawing.Size(70, 70);
 
         // square digital time display (total time duration of show) - coordinates relative to picBottomBoard
         this.lblTotalTime.Text = "00:00";
-        this.lblTotalTime.Location = new System.Drawing.Point(660, 70); // Changed from (660, 500)
+        this.lblTotalTime.Location = new System.Drawing.Point(660, 70);
         this.lblTotalTime.Size = new System.Drawing.Size(70, 70);
 
         // Combined Play/Pause button - coordinates relative to picBottomBoard
         this.btnPlay.Text = "▶";
-        this.btnPlay.Location = new System.Drawing.Point(280, 68); // Changed from (280, 498)
+        this.btnPlay.Location = new System.Drawing.Point(280, 68);
         this.btnPlay.Size = new System.Drawing.Size(70, 70);
         this.btnPlay.Click += new System.EventHandler(this.BtnPlayPause_Click);
 
         // Stop button - coordinates relative to picBottomBoard
         this.btnStop.Text = "⏹";
-        this.btnStop.Location = new System.Drawing.Point(368, 68); // Changed from (368, 498)
+        this.btnStop.Location = new System.Drawing.Point(368, 68);
         this.btnStop.Size = new System.Drawing.Size(70, 70);
         this.btnStop.Click += new System.EventHandler(this.BtnStop_Click);
 
         // Random button - coordinates relative to picBottomBoard
         this.btnRandom.Text = "🎲";
-        this.btnRandom.Location = new System.Drawing.Point(456, 68); // Changed from (456, 498)
+        this.btnRandom.Location = new System.Drawing.Point(456, 68);
         this.btnRandom.Size = new System.Drawing.Size(70, 70);
         this.btnRandom.Font = new Font("Segoe UI Symbol", 24, FontStyle.Bold);
         this.btnRandom.Click += new System.EventHandler(this.BtnRandom_Click);
 
         // Volume label - coordinates relative to picBottomBoard
         this.lblVolume.Text = "🔊"; // Speaker icon
-        this.lblVolume.Location = new System.Drawing.Point(168, 146); // Positioned to the left of volume bar
+        this.lblVolume.Location = new System.Drawing.Point(168, 146);
         this.lblVolume.Size = new System.Drawing.Size(30, 30);
-        this.lblVolume.Font = new Font("Segoe UI Emoji", 14, FontStyle.Regular); // Slightly smaller font
-        this.lblVolume.ForeColor = ColorTranslator.FromHtml("#D2691E"); // Orange text like time displays
-        this.lblVolume.BackColor = Color.Transparent; // Transparent for custom painting
-        this.lblVolume.TextAlign = ContentAlignment.MiddleCenter; // This ensures centering
-        this.lblVolume.Cursor = Cursors.Hand; // Show hand cursor to indicate it's clickable
-        this.lblVolume.BorderStyle = BorderStyle.None; // No default border
-        this.lblVolume.FlatStyle = FlatStyle.Flat; // Flat style for consistent appearance
-        this.lblVolume.AutoSize = false; // Prevent auto-sizing which can affect centering
+        this.lblVolume.Font = new Font("Segoe UI Emoji", 14, FontStyle.Regular);
+        this.lblVolume.ForeColor = ColorTranslator.FromHtml("#D2691E");
+        this.lblVolume.BackColor = Color.Transparent;
+        this.lblVolume.TextAlign = ContentAlignment.MiddleCenter;
+        this.lblVolume.Cursor = Cursors.Hand;
+        this.lblVolume.BorderStyle = BorderStyle.None;
+        this.lblVolume.FlatStyle = FlatStyle.Flat;
+        this.lblVolume.AutoSize = false;
         this.lblVolume.Click += new System.EventHandler(this.LblVolume_Click);
 
         // Volume bar - coordinates relative to picBottomBoard
-        this.trackVolume.Location = new System.Drawing.Point(200, 148); // Position after speaker icon
-        this.trackVolume.Size = new System.Drawing.Size(400, 30); // Smaller than progress bar
+        this.trackVolume.Location = new System.Drawing.Point(200, 148);
+        this.trackVolume.Size = new System.Drawing.Size(400, 30);
         this.trackVolume.Minimum = 0;
         this.trackVolume.Maximum = 100;
-        this.trackVolume.Value = 70; // Default volume at 70%
+        this.trackVolume.Value = 70;
         this.trackVolume.TabStop = false;
         this.trackVolume.ValueChanged += new System.EventHandler(this.TrackVolume_ValueChanged);
+        
         // Add all controls to the form
         this.Controls.Add(this.picBottomBoard); // Add parent first
         

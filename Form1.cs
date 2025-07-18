@@ -17,6 +17,7 @@ namespace MyMusicPlayer
         private bool isUserDragging = false;
         private string currentShowPath = "";
         private string currentFolderPath = "";
+        private string currentShowFolderPath = "";
         private Random random = new Random();
         private WaveformSampleProvider? waveformSampleProvider;
 
@@ -86,20 +87,14 @@ namespace MyMusicPlayer
             if (lblVolume != null)
             {
                 // Apply the same styling as DigitalTimeLabel controls
-                lblVolume.BackColor = Color.Transparent; // Make transparent so we can draw custom background
-                lblVolume.ForeColor = ColorTranslator.FromHtml("#D2691E"); // Orange color like time displays
-                lblVolume.BorderStyle = BorderStyle.None; // Remove default border
+                lblVolume.BackColor = Color.Transparent;
+                lblVolume.ForeColor = ColorTranslator.FromHtml("#D2691E");
+                lblVolume.BorderStyle = BorderStyle.None; 
                 lblVolume.FlatStyle = FlatStyle.Flat;
-                lblVolume.TextAlign = ContentAlignment.MiddleCenter; // Ensure perfect centering
-                lblVolume.AutoSize = false; // Prevent auto-sizing
-                
-                // Remove padding to ensure perfect centering
+                lblVolume.TextAlign = ContentAlignment.MiddleCenter;
+                lblVolume.AutoSize = false;
                 lblVolume.Padding = new Padding(0);
-                
-                // Ensure the label maintains its fixed size
                 lblVolume.Size = new Size(30, 30);
-
-                // Add custom paint event for rounded border
                 lblVolume.Paint += LblVolume_Paint;
             }
         }
@@ -243,11 +238,25 @@ namespace MyMusicPlayer
                 string relativePath = Path.GetRelativePath(musicLibraryPath, filePath);
                 string[] pathParts = relativePath.Split(Path.DirectorySeparatorChar);
 
-                if (pathParts.Length >= 3) // Should be: Collection/Year/filename.mp3
+                if (pathParts.Length >= 3) // Should be: Collection/Year/filename.mp3 or Collection/Year/ShowFolder/filename.mp3
                 {
                     string collection = pathParts[0];
                     string year = pathParts[1];
-                    string fileName = Path.GetFileNameWithoutExtension(pathParts[2]);
+                    string fileName = "";
+                    string showFolder = "";
+
+                    // Determine if this is 3-level or 4-level structure
+                    if (pathParts.Length == 3)
+                    {
+                        // 3-level: Collection/Year/filename.mp3
+                        fileName = Path.GetFileNameWithoutExtension(pathParts[2]);
+                    }
+                    else if (pathParts.Length >= 4)
+                    {
+                        // 4-level: Collection/Year/ShowFolder/filename.mp3
+                        showFolder = pathParts[2];
+                        fileName = Path.GetFileNameWithoutExtension(pathParts[3]);
+                    }
 
                     // Update collection dial
                     for (int i = 0; i < dialCollection.Items.Count; i++)
@@ -275,20 +284,43 @@ namespace MyMusicPlayer
                     // Load shows for the selected year
                     LoadShows();
 
-                    // Select the file in the list
-                    string showItem = "🎵 " + fileName;
-                    for (int i = 0; i < lstShows.Items.Count; i++)
+                    // For 4-level structure, navigate into the show folder to show the individual song
+                    if (pathParts.Length >= 4 && !string.IsNullOrEmpty(showFolder))
                     {
-                        if (lstShows.Items[i].Text == showItem)
+                        // Set the show folder path and load songs from it
+                        currentShowFolderPath = Path.Combine(currentFolderPath, showFolder);
+                        LoadSongsFromShowFolder();
+                        
+                        // Select the specific song in the list
+                        string songItem = "🎵 " + fileName;
+                        for (int i = 0; i < lstShows.Items.Count; i++)
                         {
-                            lstShows.Items[i].Selected = true;
-                            lstShows.Items[i].Focused = true;
-                            lstShows.EnsureVisible(i); // Scroll to make it visible
-                            break;
+                            if (lstShows.Items[i].Text == songItem)
+                            {
+                                lstShows.Items[i].Selected = true;
+                                lstShows.Items[i].Focused = true;
+                                lstShows.EnsureVisible(i); // Scroll to make it visible
+                                break;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // 3-level structure: select the file directly
+                        string showItem = "🎵 " + fileName;
+                        for (int i = 0; i < lstShows.Items.Count; i++)
+                        {
+                            if (lstShows.Items[i].Text == showItem)
+                            {
+                                lstShows.Items[i].Selected = true;
+                                lstShows.Items[i].Focused = true;
+                                lstShows.EnsureVisible(i); // Scroll to make it visible
+                                break;
+                            }
                         }
                     }
 
-                    Console.WriteLine($"Navigated to: {collection} -> {year} -> {fileName}");
+                    Console.WriteLine($"Navigated to: {collection} -> {year} -> {(string.IsNullOrEmpty(showFolder) ? fileName : showFolder + "/" + fileName)}");
                 }
             }
             catch (Exception ex)
@@ -299,8 +331,9 @@ namespace MyMusicPlayer
 
         private void LstShows_DrawItem(object? sender, DrawListViewItemEventArgs e)
         {
-            // Determine colors based on selection
+            // Determine colors based on selection and item type
             Color textColor = Color.White;
+            var itemTag = e.Item.Tag?.ToString();
             
             // Create rounded rectangle path
             int cornerRadius = 8; // Adjust this value to make more or less rounded
@@ -311,7 +344,39 @@ namespace MyMusicPlayer
                 // Enable anti-aliasing for smooth rounded edges
                 e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
                 
-                if (e.Item.Selected)
+                // Special styling for different item types
+                if (itemTag == "BACK")
+                {
+                    // Back button: Blue gradient
+                    using (LinearGradientBrush brush = new LinearGradientBrush(
+                        itemRect,
+                        ColorTranslator.FromHtml("#4169E1"), // Royal blue (lighter)
+                        ColorTranslator.FromHtml("#191970"), // Midnight blue (darker)
+                        LinearGradientMode.Vertical))
+                    {
+                        e.Graphics.FillPath(brush, path);
+                    }
+                    textColor = Color.White;
+                }
+                else if (itemTag == "SEPARATOR")
+                {
+                    // Separator: Dark background, no selection
+                    using (SolidBrush backgroundBrush = new SolidBrush(Color.FromArgb(30, 30, 30)))
+                    {
+                        e.Graphics.FillPath(backgroundBrush, path);
+                    }
+                    textColor = Color.Gray;
+                }
+                else if (itemTag == "INFO")
+                {
+                    // Info item: Dark gray background
+                    using (SolidBrush backgroundBrush = new SolidBrush(Color.FromArgb(50, 50, 50)))
+                    {
+                        e.Graphics.FillPath(backgroundBrush, path);
+                    }
+                    textColor = Color.LightGray;
+                }
+                else if (e.Item.Selected)
                 {
                     // Selected item: Same bronze gradient as the buttons with rounded edges
                     using (LinearGradientBrush brush = new LinearGradientBrush(
@@ -342,8 +407,41 @@ namespace MyMusicPlayer
                 e.Graphics.SmoothingMode = SmoothingMode.Default;
             }
 
-            // Draw the music note icon - CENTERED VERTICALLY
-            string musicIcon = "🎵";
+            // Handle different icon types based on content
+            string displayText = e.Item.Text;
+            string iconToDraw = "🎵"; // Default music icon
+            
+            if (displayText.StartsWith("⬅️"))
+            {
+                iconToDraw = "⬅️"; // Back arrow
+                displayText = displayText.Substring(2).Trim();
+            }
+            else if (displayText.StartsWith("📁"))
+            {
+                iconToDraw = "📁"; // Folder icon
+                displayText = displayText.Substring(2).Trim();
+            }
+            else if (displayText.StartsWith("🎵"))
+            {
+                iconToDraw = "🎵"; // Music note
+                displayText = displayText.Substring(2).Trim();
+            }
+            else if (displayText.StartsWith("─────"))
+            {
+                // Separator: just draw the line, no icon
+                using (SolidBrush textBrush = new SolidBrush(textColor))
+                {
+                    StringFormat format = new StringFormat
+                    {
+                        Alignment = StringAlignment.Center,
+                        LineAlignment = StringAlignment.Center
+                    };
+                    e.Graphics.DrawString(displayText, lstShows.Font, textBrush, e.Bounds, format);
+                }
+                return; // Exit early for separators
+            }
+
+            // Draw the icon - CENTERED VERTICALLY
             Font iconFont = new Font("Segoe UI Emoji", 14, FontStyle.Regular);
             Rectangle iconBounds = new Rectangle(
                 e.Bounds.X + 10, // Left padding
@@ -360,16 +458,10 @@ namespace MyMusicPlayer
                     LineAlignment = StringAlignment.Center // CENTER the icon vertically
                 };
 
-                e.Graphics.DrawString(musicIcon, iconFont, iconBrush, iconBounds, iconFormat);
+                e.Graphics.DrawString(iconToDraw, iconFont, iconBrush, iconBounds, iconFormat);
             }
 
             // Draw the text - LEFT ALIGNED AND VERTICALLY CENTERED
-            string displayText = e.Item.Text;
-            if (displayText.StartsWith("🎵 "))
-            {
-                displayText = displayText.Substring(2).Trim(); // Remove the emoji from text
-            }
-
             Rectangle textBounds = new Rectangle(
                 e.Bounds.X + 40, // Left padding after icon
                 e.Bounds.Y, // Start from top
@@ -609,6 +701,7 @@ namespace MyMusicPlayer
         {
             if (dialCollection.SelectedItem != null)
             {
+                currentShowFolderPath = ""; // Reset show folder navigation when collection changes
                 LoadYears();
             }
         }
@@ -657,6 +750,7 @@ namespace MyMusicPlayer
         {
             if (dialYear.SelectedItem != null && dialCollection.SelectedItem != null)
             {
+                currentShowFolderPath = ""; // Reset show folder navigation when year changes
                 LoadShows();
             }
         }
@@ -680,34 +774,74 @@ namespace MyMusicPlayer
             string selectedYear = dialYear.SelectedItem;
             currentFolderPath = Path.Combine(musicLibraryPath, selectedMainFolder, selectedYear);
 
+            // Check if we're currently inside a show folder (4-level drill-down)
+            if (!string.IsNullOrEmpty(currentShowFolderPath) && Directory.Exists(currentShowFolderPath))
+            {
+                LoadSongsFromShowFolder();
+                return;
+            }
+
+            // Reset show folder path when loading main shows
+            currentShowFolderPath = "";
+
             if (Directory.Exists(currentFolderPath))
             {
-                // Get both MP3 and FLAC files
-                var audioFiles = Directory.GetFiles(currentFolderPath, "*.mp3")
+                // First, check for direct audio files (3-level structure)
+                var directAudioFiles = Directory.GetFiles(currentFolderPath, "*.mp3")
                     .Concat(Directory.GetFiles(currentFolderPath, "*.flac"))
                     .OrderBy(f => Path.GetFileNameWithoutExtension(f))
                     .ToArray();
                 
-                if (audioFiles.Length == 0)
+                if (directAudioFiles.Length > 0)
                 {
-                    // Display greeting when folder exists but has no audio files
-                    var greetingItem1 = new ListViewItem("I'M SORRY DAVE,");
-                    var greetingItem2 = new ListViewItem("NO AUDIO FILES FOUND");
-                    lstShows.Items.Add(greetingItem1);
-                    lstShows.Items.Add(greetingItem2);
-                }
-                else
-                {
-                    foreach (var audioFile in audioFiles)
+                    // 3-level structure: Direct audio files found
+                    foreach (var audioFile in directAudioFiles)
                     {
                         string showName = Path.GetFileNameWithoutExtension(audioFile);
                         string extension = Path.GetExtension(audioFile).ToUpperInvariant().TrimStart('.');
                         string showItem = "🎵 " + showName;
 
-                        // For MaterialListView, we need to create ListViewItems
                         var listItem = new ListViewItem(showItem);
                         listItem.Tag = audioFile; // Store full path in Tag for easy access
                         lstShows.Items.Add(listItem);
+                    }
+                }
+                else
+                {
+                    // No direct audio files, check for show folders (4-level structure)
+                    var showFolders = Directory.GetDirectories(currentFolderPath)
+                        .OrderBy(f => Path.GetFileName(f))
+                        .ToArray();
+                    
+                    if (showFolders.Length > 0)
+                    {
+                        // 4-level structure: Show folders found
+                        foreach (var showFolder in showFolders)
+                        {
+                            // Check if this folder contains audio files
+                            var folderAudioFiles = Directory.GetFiles(showFolder, "*.mp3")
+                                .Concat(Directory.GetFiles(showFolder, "*.flac"))
+                                .ToArray();
+                            
+                            if (folderAudioFiles.Length > 0)
+                            {
+                                string showName = Path.GetFileName(showFolder);
+                                string showItem = "📁 " + showName; // Use folder icon to distinguish from single files
+
+                                var listItem = new ListViewItem(showItem);
+                                listItem.Tag = showFolder; // Store folder path in Tag
+                                lstShows.Items.Add(listItem);
+                            }
+                        }
+                    }
+                    
+                    // If no show folders with audio files found
+                    if (lstShows.Items.Count == 0)
+                    {
+                        var greetingItem1 = new ListViewItem("I'M SORRY DAVE,");
+                        var greetingItem2 = new ListViewItem("NO AUDIO FILES FOUND");
+                        lstShows.Items.Add(greetingItem1);
+                        lstShows.Items.Add(greetingItem2);
                     }
                 }
             }
@@ -723,30 +857,105 @@ namespace MyMusicPlayer
             UpdateButtonStates();
         }
 
+        private void LoadSongsFromShowFolder()
+        {
+            lstShows.Items.Clear();
+
+            // Add a "Back" option at the top
+            var backItem = new ListViewItem("⬅️ BACK TO SHOWS");
+            backItem.Tag = "BACK";
+            lstShows.Items.Add(backItem);
+
+            // Add a separator
+            var separatorItem = new ListViewItem("─────────────────");
+            separatorItem.Tag = "SEPARATOR";
+            lstShows.Items.Add(separatorItem);
+
+            // Get all audio files in the show folder
+            var audioFiles = Directory.GetFiles(currentShowFolderPath, "*.mp3")
+                .Concat(Directory.GetFiles(currentShowFolderPath, "*.flac"))
+                .OrderBy(f => Path.GetFileName(f))
+                .ToArray();
+
+            if (audioFiles.Length > 0)
+            {
+                // Show individual songs
+                foreach (var audioFile in audioFiles)
+                {
+                    string songName = Path.GetFileNameWithoutExtension(audioFile);
+                    string extension = Path.GetExtension(audioFile).ToUpperInvariant().TrimStart('.');
+                    string songItem = "🎵 " + songName;
+
+                    var listItem = new ListViewItem(songItem);
+                    listItem.Tag = audioFile; // Store full path in Tag
+                    lstShows.Items.Add(listItem);
+                }
+
+                // Add show info at the bottom
+                string showFolderName = Path.GetFileName(currentShowFolderPath);
+                var infoItem = new ListViewItem($"📁 {showFolderName} ({audioFiles.Length} songs)");
+                infoItem.Tag = "INFO";
+                lstShows.Items.Add(infoItem);
+            }
+            else
+            {
+                var noSongsItem = new ListViewItem("NO AUDIO FILES FOUND");
+                lstShows.Items.Add(noSongsItem);
+            }
+        }
+
         private void LstShows_DoubleClick(object? sender, EventArgs e)
         {
             if (lstShows.SelectedItems.Count > 0)
             {
                 string selectedItem = lstShows.SelectedItems[0].Text ?? "";
+                var selectedTag = lstShows.SelectedItems[0].Tag;
                 
-                // Prevent double-click on greeting messages
+                // Handle "Back" navigation
+                if (selectedTag?.ToString() == "BACK")
+                {
+                    currentShowFolderPath = ""; // Clear show folder path
+                    LoadShows(); // Reload to show folder view
+                    return;
+                }
+
+                // Prevent double-click on greeting messages and separators
                 if (selectedItem == "   SHALL WE PLAY SOME MUSIC?" || 
                     selectedItem == "1. CLICK THE STAR," ||
                     selectedItem == "2. SELECT YOUR MUSIC LIBRARY," ||  
                     selectedItem == "3. SELECT A SHOW OR ROLL DICE," ||
                     selectedItem == "I'M SORRY DAVE," ||
                     selectedItem == "NO BAND OR YEAR SELECTED" ||
-                    selectedItem == "NO MP3 FILES FOUND" ||
-                    selectedItem == "FOLDER NOT FOUND") 
+                    selectedItem == "NO AUDIO FILES FOUND" ||
+                    selectedItem == "FOLDER NOT FOUND" ||
+                    selectedItem.StartsWith("─────") ||
+                    selectedTag?.ToString() == "SEPARATOR" ||
+                    selectedTag?.ToString() == "INFO") 
                 {
-                    return; // Do nothing for greeting messages
+                    return; // Do nothing for these items
                 }
                 
+                // Handle single audio files (3-level structure OR songs within show folder)
                 if (selectedItem.StartsWith("🎵 "))
                 {
                     string showName = selectedItem.Substring(2).Trim(); // Remove the emoji and trim whitespace
                     
-                    // Try to find the file with either .mp3 or .flac extension
+                    // If we're inside a show folder, play the selected song directly
+                    if (!string.IsNullOrEmpty(currentShowFolderPath))
+                    {
+                        var audioFiles = Directory.GetFiles(currentShowFolderPath, "*.mp3")
+                            .Concat(Directory.GetFiles(currentShowFolderPath, "*.flac"))
+                            .Where(f => Path.GetFileNameWithoutExtension(f) == showName)
+                            .ToArray();
+                        
+                        if (audioFiles.Length > 0)
+                        {
+                            PlayShow(audioFiles[0]);
+                        }
+                        return;
+                    }
+                    
+                    // Otherwise, handle 3-level structure
                     string mp3Path = Path.Combine(currentFolderPath, showName + ".mp3");
                     string flacPath = Path.Combine(currentFolderPath, showName + ".flac");
                     
@@ -768,6 +977,24 @@ namespace MyMusicPlayer
                     {
                         MessageBox.Show($"The audio file '{showName}' could not be found in the folder '{currentFolderPath}'.",
                                         "File Not Found", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    }
+                }
+                // Handle show folders (4-level structure) - Navigate into folder
+                else if (selectedItem.StartsWith("📁 "))
+                {
+                    string folderName = selectedItem.Substring(2).Trim(); // Remove the folder emoji
+                    string showFolderPath = Path.Combine(currentFolderPath, folderName);
+                    
+                    if (Directory.Exists(showFolderPath))
+                    {
+                        // Navigate into the show folder
+                        currentShowFolderPath = showFolderPath;
+                        LoadSongsFromShowFolder(); // Load individual songs
+                    }
+                    else
+                    {
+                        MessageBox.Show($"The show folder '{folderName}' could not be found.",
+                                        "Folder Not Found", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     }
                 }
             }
@@ -892,17 +1119,158 @@ namespace MyMusicPlayer
 
         private void HighlightCurrentShow(string showPath)
         {
-            string showName = Path.GetFileName(showPath);
-            string showItem = "🎵 " + showName;
-
-            for (int i = 0; i < lstShows.Items.Count; i++)
+            try
             {
-                if (lstShows.Items[i].Text == showItem)
+                // Determine if this is a direct file or file within a show folder
+                string parentDir = Path.GetDirectoryName(showPath) ?? "";
+                string fileName = Path.GetFileNameWithoutExtension(showPath);
+                
+                // Check if the parent directory is the current folder (3-level structure)
+                if (parentDir == currentFolderPath)
                 {
-                    lstShows.Items[i].Selected = true;
-                    lstShows.Items[i].Focused = true;
-                    break;
+                    // 3-level structure: highlight the file
+                    string showItem = "🎵 " + fileName;
+                    for (int i = 0; i < lstShows.Items.Count; i++)
+                    {
+                        if (lstShows.Items[i].Text == showItem)
+                        {
+                            lstShows.Items[i].Selected = true;
+                            lstShows.Items[i].Focused = true;
+                            break;
+                        }
+                    }
                 }
+                else if (!string.IsNullOrEmpty(currentShowFolderPath) && parentDir == currentShowFolderPath)
+                {
+                    // 4-level structure AND we're currently inside the show folder: highlight the specific song
+                    string songItem = "🎵 " + fileName;
+                    for (int i = 0; i < lstShows.Items.Count; i++)
+                    {
+                        if (lstShows.Items[i].Text == songItem)
+                        {
+                            lstShows.Items[i].Selected = true;
+                            lstShows.Items[i].Focused = true;
+                            break;
+                        }
+                    }
+                }
+                else
+                {
+                    // 4-level structure BUT we're at folder level: highlight the show folder
+                    string showFolderName = Path.GetFileName(parentDir);
+                    string folderItem = "📁 " + showFolderName;
+                    for (int i = 0; i < lstShows.Items.Count; i++)
+                    {
+                        if (lstShows.Items[i].Text == folderItem)
+                        {
+                            lstShows.Items[i].Selected = true;
+                            lstShows.Items[i].Focused = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error highlighting current show: {ex.Message}");
+            }
+        }
+
+        private bool PlayNextSong()
+        {
+            try
+            {
+                // Find the currently selected/playing item in the list
+                int currentIndex = -1;
+                string currentFileName = Path.GetFileNameWithoutExtension(currentShowPath);
+                string currentItem = "🎵 " + currentFileName;
+
+                for (int i = 0; i < lstShows.Items.Count; i++)
+                {
+                    if (lstShows.Items[i].Text == currentItem)
+                    {
+                        currentIndex = i;
+                        break;
+                    }
+                }
+
+                if (currentIndex == -1)
+                {
+                    System.Diagnostics.Debug.WriteLine("Current song not found in list");
+                    return false;
+                }
+
+                // Look for the next playable song (skip back buttons, separators, info items)
+                for (int nextIndex = currentIndex + 1; nextIndex < lstShows.Items.Count; nextIndex++)
+                {
+                    var nextItem = lstShows.Items[nextIndex];
+                    var nextTag = nextItem.Tag?.ToString();
+
+                    // Skip non-playable items
+                    if (nextTag == "BACK" || nextTag == "SEPARATOR" || nextTag == "INFO" ||
+                        nextItem.Text.StartsWith("─────"))
+                    {
+                        continue;
+                    }
+
+                    // Play the next song if it's a music file
+                    if (nextItem.Text.StartsWith("🎵 "))
+                    {
+                        string nextSongName = nextItem.Text.Substring(2).Trim();
+                        string nextSongPath = "";
+
+                        // If we're inside a show folder, look for the song there
+                        if (!string.IsNullOrEmpty(currentShowFolderPath))
+                        {
+                            var audioFiles = Directory.GetFiles(currentShowFolderPath, "*.mp3")
+                                .Concat(Directory.GetFiles(currentShowFolderPath, "*.flac"))
+                                .Where(f => Path.GetFileNameWithoutExtension(f) == nextSongName)
+                                .ToArray();
+
+                            if (audioFiles.Length > 0)
+                            {
+                                nextSongPath = audioFiles[0];
+                            }
+                        }
+                        else
+                        {
+                            // 3-level structure
+                            string mp3Path = Path.Combine(currentFolderPath, nextSongName + ".mp3");
+                            string flacPath = Path.Combine(currentFolderPath, nextSongName + ".flac");
+
+                            if (File.Exists(mp3Path))
+                            {
+                                nextSongPath = mp3Path;
+                            }
+                            else if (File.Exists(flacPath))
+                            {
+                                nextSongPath = flacPath;
+                            }
+                        }
+
+                        if (!string.IsNullOrEmpty(nextSongPath) && File.Exists(nextSongPath))
+                        {
+                            // Clear current selection and select the next song
+                            lstShows.SelectedItems.Clear();
+                            nextItem.Selected = true;
+                            nextItem.Focused = true;
+                            lstShows.EnsureVisible(nextIndex);
+
+                            // Play the next song
+                            PlayShow(nextSongPath);
+                            System.Diagnostics.Debug.WriteLine($"Auto-playing next song: {nextSongName}");
+                            return true;
+                        }
+                    }
+                }
+
+                System.Diagnostics.Debug.WriteLine("No next song found in the list");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error playing next song: {ex.Message}");
+                return false;
             }
         }
 
@@ -917,9 +1285,14 @@ namespace MyMusicPlayer
                 // Check if show has ended
                 if (outputDevice.PlaybackState == PlaybackState.Stopped && trackProgress.Value > 0)
                 {
-                    btnPlay.Text = "▶";
-                    spinningCassette.IsSpinning = false; 
-                    BtnStop_Click(sender, e);
+                    // Try to play the next song automatically
+                    if (!PlayNextSong())
+                    {
+                        // No next song found, stop playback
+                        btnPlay.Text = "▶";
+                        spinningCassette.IsSpinning = false; 
+                        BtnStop_Click(sender, e);
+                    }
                 }
             }
         }
@@ -963,11 +1336,38 @@ namespace MyMusicPlayer
             if (lstShows.SelectedItems.Count > 0 && (outputDevice == null || outputDevice.PlaybackState == PlaybackState.Stopped))
             {
                 string selectedItem = lstShows.SelectedItems[0].Text ?? "";
+                var selectedTag = lstShows.SelectedItems[0].Tag;
+
+                // Don't play back/separator/info items
+                if (selectedTag?.ToString() == "BACK" || 
+                    selectedTag?.ToString() == "SEPARATOR" || 
+                    selectedTag?.ToString() == "INFO")
+                {
+                    return;
+                }
+                
+                // Handle single audio files (3-level structure OR songs within show folder)
                 if (selectedItem.StartsWith("🎵 "))
                 {
                     string showName = selectedItem.Substring(2).Trim();
                     
-                    // Try to find the file with either .mp3 or .flac extension
+                    // If we're inside a show folder, play the selected song directly
+                    if (!string.IsNullOrEmpty(currentShowFolderPath))
+                    {
+                        var audioFiles = Directory.GetFiles(currentShowFolderPath, "*.mp3")
+                            .Concat(Directory.GetFiles(currentShowFolderPath, "*.flac"))
+                            .Where(f => Path.GetFileNameWithoutExtension(f) == showName)
+                            .ToArray();
+                        
+                        if (audioFiles.Length > 0)
+                        {
+                            PlayShow(audioFiles[0]);
+                            btnPlay.Text = "⏸";  // Change to pause icon
+                            return;
+                        }
+                    }
+                    
+                    // Otherwise, handle 3-level structure
                     string mp3Path = Path.Combine(currentFolderPath, showName + ".mp3");
                     string flacPath = Path.Combine(currentFolderPath, showName + ".flac");
                     
@@ -987,6 +1387,14 @@ namespace MyMusicPlayer
                         btnPlay.Text = "⏸";  // Change to pause icon
                         return;
                     }
+                }
+                // Handle show folders (4-level structure) - Don't auto-play, user should navigate into folder first
+                else if (selectedItem.StartsWith("📁 "))
+                {
+                    // For folders, don't auto-play - user should double-click to navigate
+                    MessageBox.Show("Double-click the show folder to see individual songs, then select a song to play.",
+                                    "Show Folder Selected", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
                 }
             }
 
